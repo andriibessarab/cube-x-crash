@@ -1,39 +1,47 @@
-import javax.swing.*;
-
+import gameobjects.Ball;
 import screens.MainMenuScreen;
 import screens.Screen;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-public class ScreenManager extends JPanel {
+public class ScreenManager extends JPanel implements ActionListener {
     public static final int PANEL_WIDTH = 1600;
     public static final int PANEL_HEIGHT = 1000;
+    private final Timer timer;
 
     // All the screens
-    public final Screen MAIN_MENU_SCREEN;
+    private final Screen mainMenuScreen;
 
-    // The current screen
+    // Current screen
     private Screen currentScreen;
 
     public ScreenManager() {
+        // Initialize the screens
+        mainMenuScreen = new MainMenuScreen(PANEL_WIDTH, PANEL_HEIGHT);
+
         setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT)); // Set the size of the panel
         setFocusable(true); // Set the panel to be focusable
-        requestFocus(); // Request focus
+        requestFocus(); // Request focus for the panel
 
-        // Initialize the screens
-        MAIN_MENU_SCREEN = new MainMenuScreen(PANEL_WIDTH, PANEL_HEIGHT);
+        setCurrentScreen(mainMenuScreen);
 
-        // Set the current screen
-        setCurrentScreen(MAIN_MENU_SCREEN);
+        // Create a timer to update the game state
+        timer = new Timer(10, this);
+        timer.start();
     }
 
     @Override
     protected void paintComponent(Graphics g) {
+        // Call the super method
         super.paintComponent(g);
+    }
 
-        // Draw the current screen
-        currentScreen.draw(g);
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        repaint();
     }
 
     public void setCurrentScreen(Screen screen) {
@@ -45,11 +53,15 @@ public class ScreenManager extends JPanel {
         // Update the current screen
         currentScreen = screen;
 
+        // Set the layout manager
+        this.setLayout(new BorderLayout());
+
         // Add the new screen to the JPanel
-        this.add(currentScreen);
+        this.add(currentScreen, BorderLayout.CENTER);
 
         // Refresh the JPanel
-        validate();
-        repaint();
+        this.revalidate();
+        this.repaint();
     }
+
 }

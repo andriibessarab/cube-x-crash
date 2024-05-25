@@ -31,13 +31,12 @@ public class MainMenuScreen extends Screen {
     }
 
     @Override
-    public void draw(Graphics g) {
-        assert BG_IMAGE != null;
-        g.drawImage(BG_IMAGE, 100, 0, null);
+    protected void paintComponent(Graphics g) {
+        // Call the super method
+        super.paintComponent(g);
 
-        // draw a rectangle over whoel are
-//        g.setColor(Color.BLACK);
-//        g.fillRect(0, 0, PANEL_WIDTH, PANEL_HEIGHT);
+                assert BG_IMAGE != null;
+        g.drawImage(BG_IMAGE, 0, 0, null);
     }
 
     @Override

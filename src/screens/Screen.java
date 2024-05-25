@@ -28,5 +28,4 @@ public abstract class Screen extends JPanel implements ActionListener, KeyListen
     }
 
     public abstract void update();
-    public abstract void draw(Graphics g);
 }

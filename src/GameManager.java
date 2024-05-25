@@ -61,7 +61,6 @@ public class GameManager extends JPanel implements ActionListener, KeyListener, 
         // PAINT TITLE SAYING LEVEL 1 ABOVE THE GAME FIELD
         g.setColor(Color.BLACK);
         g.setFont(new Font("Arial", Font.BOLD, 50));
-        g.drawString("LEVEL 1", PANEL_WIDTH / 2 - 100, 50);
 
         super.paintComponent(g);
         gameField.draw(g);
