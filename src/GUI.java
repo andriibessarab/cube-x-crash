@@ -1,17 +1,14 @@
 import javax.swing.*;
-import java.awt.*;
 
 public class GUI {
-    private static final String TITLE = "My Game";
+    private static final String TITLE = "CubeXCrash"; // The title of the JFrame
 
     public GUI() {
-        JFrame frame = new JFrame(TITLE);
+        JFrame frame = new JFrame(TITLE); // Create a new JFrame with the specified title
+        GameManager gameManager = new GameManager(); // Create an instance of the GameManager class
 
-        JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 30));
-        panel.setLayout(new GridLayout(0, 1));
-
-        frame.add(panel, BorderLayout.CENTER);
+        // Set up the JFrame
+        frame.add(gameManager);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
