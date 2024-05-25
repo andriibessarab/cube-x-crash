@@ -4,16 +4,19 @@ import java.awt.event.*;
 
 import gameobjects.Ball;
 import gameobjects.Cannon;
+import screencomponents.GameField;
 
 public class GameManager extends JPanel implements ActionListener, KeyListener, MouseListener, MouseMotionListener {
-    private final int PANEL_WIDTH = 800;
-    private final int PANEL_HEIGHT = 600;
+    public static final int PANEL_WIDTH = 1600;
+    public static final int PANEL_HEIGHT = 1000;
     private Timer timer;
     Cannon cannon;
     private java.util.List<Ball> balls = new java.util.ArrayList<>();
     private int ballSpawnDelay = 0; // Delay counter for ball spawning
 
     private boolean isMousePressed = false;
+
+    private GameField gameField;
 
     public GameManager() {
         setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT)); // Set the size of the panel
@@ -29,6 +32,8 @@ public class GameManager extends JPanel implements ActionListener, KeyListener, 
         // Create a timer to update the game state
         timer = new Timer(10, this);
         timer.start();
+
+        gameField = new GameField(PANEL_WIDTH, PANEL_HEIGHT);
 
         // Spawn ball on mouse release
 //        addMouseListener(new MouseAdapter() {
@@ -53,11 +58,17 @@ public class GameManager extends JPanel implements ActionListener, KeyListener, 
      */
     @Override
     protected void paintComponent(Graphics g) {
+        // PAINT TITLE SAYING LEVEL 1 ABOVE THE GAME FIELD
+        g.setColor(Color.BLACK);
+        g.setFont(new Font("Arial", Font.BOLD, 50));
+        g.drawString("LEVEL 1", PANEL_WIDTH / 2 - 100, 50);
+
         super.paintComponent(g);
-        for (Ball ball : balls) {
-            ball.draw(g);
-        }
-        cannon.draw(g);
+        gameField.draw(g);
+//        for (Ball ball : balls) {
+//            ball.draw(g);
+//        }
+//        cannon.draw(g);
 
     }
 
@@ -68,7 +79,7 @@ public class GameManager extends JPanel implements ActionListener, KeyListener, 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (ballSpawnDelay > 0) {
-            spawnBall();
+            spawnBall(3, (int) (Math.PI*0.5));
             ballSpawnDelay--;
         }
         for (Ball ball : balls) {
@@ -79,18 +90,28 @@ public class GameManager extends JPanel implements ActionListener, KeyListener, 
     }
 
 
-    private void spawnBall() {
+    private void spawnBall(double angle, double velocityMagnitude) {
+        int velocityX = (int) (velocityMagnitude * Math.cos(angle-Math.PI/2));
+        int velocityY = -(int) (velocityMagnitude * Math.sin(angle-Math.PI/2));
+
+
+        //System.out.println("angle: " + angle + "veloctiyMg" + velocityMagnitude + " velocityX: " + velocityX + " velocityY: " + velocityY);
+
         // Assuming Ball constructor takes the initial x, y position and direction
-        Ball newBall = new Ball(400, 300, 20, 3, 3, Color.RED, PANEL_WIDTH, PANEL_HEIGHT);
+        Ball newBall = new Ball(400, 300, 30, velocityX, velocityY, Color.RED, PANEL_WIDTH, PANEL_HEIGHT);
         balls.add(newBall);
+
+        //spawn ball at specific amg
     }
 
     @Override
     public void keyTyped(KeyEvent e) {
         // Toggle debug mode
         if (e.getKeyChar() == 'd') {
-            System.out.println("Toggling debug mode");
             cannon.toggleDebug();
+            for (Ball ball : balls) {
+                ball.toggleDebug();
+            }
         }
     }
 
@@ -110,6 +131,12 @@ public class GameManager extends JPanel implements ActionListener, KeyListener, 
     public void mouseReleased(MouseEvent e) {
         cannon.setMousePosOnRelease(e.getPoint());
         cannon.setCurrentMousePos(e.getPoint());
+
+        cannon.shoot();
+
+        // Spawn ball if cannon has produced velocity
+        if(cannon.getProducedVelocityMagnitude() > 0)
+            spawnBall(cannon.getAngle(), cannon.getProducedVelocityMagnitude());
     }
 
     @Override

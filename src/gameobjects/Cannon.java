@@ -13,6 +13,9 @@ public class Cannon extends GameObject {
     private final Color BORDER_COLOR = new Color(166, 68, 3);
     private final Color ACCENT_COLOR = new Color(227, 93, 3);
 
+    // Define the scaling factor(s)
+    private final int POWER_SCALING_FACTOR = 20;
+
     // Define the angle and power of the cannon
     private double angle; // Angle in radians
     private double power;
@@ -21,9 +24,6 @@ public class Cannon extends GameObject {
     private Point currentMousePos;
     private Point mousePosOnPress;
     private Point mousePosOnRelease;
-
-    // Define the debug mode
-    boolean debug = false;
 
     // Constructor for the Cannon of default width and height
     public Cannon(int x, int y, Point currentMousePos) {
@@ -36,7 +36,7 @@ public class Cannon extends GameObject {
         this.mousePosOnRelease = currentMousePos;
 
         // Initialize the angle and power
-        calculateAngleAndPower();
+        calculateAngle();
     }
 
     // Constructor for the Cannon of custom width and height
@@ -50,32 +50,27 @@ public class Cannon extends GameObject {
         this.mousePosOnRelease = currentMousePos;
 
         // Initialize the angle and power
-        calculateAngleAndPower();
+        calculateAngle();
     }
 
     @Override
     public void update() {
         // Update the angle and power of the cannon
-        calculateAngleAndPower();
-
-//        // Calculate the angle and power based on mousePress and mouseRelease
-//        if (mouseRelease != null && mousePress != null) {
-//            double deltaX = mouseRelease.x - mousePress.x;
-//            double deltaY = mouseRelease.y - mousePress.y;
-//            angle = Math.atan2(deltaY, deltaX);
-//            power = Math.sqrt(deltaX * deltaX + deltaY * deltaY) / 10; // Adjust the divisor for scaling power
-//        }
+        calculateAngle();
     }
 
+    // Draw the cannon
     @Override
     public void draw(Graphics g) {
         int barrelRelativeWidth = (int)(width * 0.85); // The width of the barrel relative to the width of the base
         int barrelRelativeHeight = (int)(height * 0.9); // The height of the barrel relative to the height of the base
 
         int barrelRelativeYPos = y - (int)(height * 0.75); // The height of the barrel relative to the height of the cannon
-        int barrelRelaticeXPos = x + (width - barrelRelativeWidth) / 2; // The x position of the barrel relative to the width of the cannon
+        int barrelRelativeXPos = x + (width - barrelRelativeWidth) / 2; // The x position of the barrel relative to the width of the cannon
 
-        int startAngleDegrees = Math.max(140, Math.min(220,  (int) Math.toDegrees(angle))); // The rot angle of the barrel
+        calculateAngle();
+
+        int startAngleDegrees = (int) Math.toDegrees(this.angle);
 
         // Draw the base of the cannon
         g.setColor(BASE_COLOR);
@@ -87,19 +82,21 @@ public class Cannon extends GameObject {
 
         // Draw the barrel of the cannon
         g.setColor(BARREL_COLOR);
-        g.fillArc(barrelRelaticeXPos, barrelRelativeYPos, barrelRelativeWidth, barrelRelativeHeight, startAngleDegrees, 180);
+        g.fillArc(barrelRelativeXPos, barrelRelativeYPos, barrelRelativeWidth, barrelRelativeHeight, startAngleDegrees, 180);
 
         // Draw the border of the barrel of the cannon
         g.setColor(BORDER_COLOR);
-        g.drawArc(barrelRelaticeXPos, barrelRelativeYPos, barrelRelativeWidth, barrelRelativeHeight, startAngleDegrees, 180);
+        g.drawArc(barrelRelativeXPos, barrelRelativeYPos, barrelRelativeWidth, barrelRelativeHeight, startAngleDegrees, 180);
 
         // Draw the debug information
-        if (debug) {
+        if (super.debug) {
             drawDebug(g);
         }
     }
 
-    private void drawDebug(Graphics g) {
+    // Draw the debug information
+    @Override
+    protected void drawDebug(Graphics g) {
         // Draw the mouse press and release points
         g.setColor(Color.RED);
         g.fillOval(mousePosOnPress.x - 5, mousePosOnPress.y - 5, 10, 10);
@@ -134,26 +131,47 @@ public class Cannon extends GameObject {
         g.drawString("dy: " + (mousePosOnRelease.y - y - height / 2), mousePosOnRelease.x + 10, mousePosOnRelease.y + 100);
     }
 
-    private void calculateAngleAndPower() {
+    // Shoot the cannon
+    public void shoot() {
+        calculateAngle();
+        calculatePower();
+    }
+
+    // Calculate the angle of the cannon
+    private void calculateAngle() {
+        if(currentMousePos == null) return;
+
         // Calculate  delta x and delta y
         double deltaX = currentMousePos.x - x - (double) width /2;
         double deltaY = currentMousePos.y - y - (double) height /2;
 
         // Calculate the angle based on the current mouse position
         angle = Math.abs(Math.atan2(deltaY, deltaX)) + + Math.PI/2;
+
+        angle = Math.toRadians(Math.max(140, Math.min(220,  (int) Math.toDegrees(angle)))); // The rot angle of the barrel
     }
 
-    // Call this method when the mouse is pressed
-//    public void setMousePress(Point p) {
-//        mousePress = p;
-//    }
-//
-//    // Call this method when the mouse is released
-//    public void setMouseRelease(Point p) {
-//        mouseRelease = p;
-//        update(); // Update the cannon's angle and power
-//    }
+    // Calculate the power of the cannon
+    private void calculatePower() {
+        if (mousePosOnPress == null || mousePosOnRelease == null) return;
 
+        // Calculate  delta x and delta y
+        double deltaX = mousePosOnRelease.x - mousePosOnPress.x;
+        double deltaY = mousePosOnRelease.y - mousePosOnPress.y;
+
+        // Calculate the power based on the distance between the mouse press and release positions
+        power = Math.sqrt(deltaX * deltaX + deltaY * deltaY) / POWER_SCALING_FACTOR; // Adjust the divisor for scaling power
+        if (power > 5) power = 5;
+        if (power < 1.5) power = 0;
+    }
+
+    public double getAngle() {
+        return angle;
+    }
+
+    public double getProducedVelocityMagnitude() {
+        return power;
+    }
 
     public void setCurrentMousePos(Point p) {
         currentMousePos = p;
@@ -165,9 +183,5 @@ public class Cannon extends GameObject {
 
     public void setMousePosOnRelease(Point p) {
         mousePosOnRelease = p;
-    }
-
-    public void toggleDebug() {
-        this.debug = !this.debug;
     }
 }

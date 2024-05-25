@@ -39,5 +39,16 @@ public class Ball extends GameObject {
         g.setColor(color);
         // Draw the ball as a filled circle
         g.fillOval(x, y, width, height);
+
+        // Draw debug information if debug mode is enabled
+        if (debug) {
+            drawDebug(g);
+        }
+    }
+
+    @Override
+    protected void drawDebug(Graphics g) {
+        g.drawString("SpeedX: " + speedX, x + width + 5, y);
+        g.drawString("SpeedY: " + speedY, x + width + 5, y + 15);
     }
 }

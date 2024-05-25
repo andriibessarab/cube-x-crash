@@ -5,10 +5,12 @@ public class GUI {
 
     public GUI() {
         JFrame frame = new JFrame(TITLE); // Create a new JFrame with the specified title
-        GameManager gameManager = new GameManager(); // Create an instance of the GameManager class
+
+        ScreenManager screenManager = new ScreenManager(); // Create a new ScreenManager
 
         // Set up the JFrame
-        frame.add(gameManager);
+        frame.add(screenManager);
+        frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);

@@ -6,6 +6,7 @@ public abstract class GameObject {
     protected int x, y; // Position
     protected int width, height; // Size
     protected boolean isVisible; // Visibility flag
+    protected boolean debug = false; // Debug mode flag
 
     public GameObject(int x, int y, int width, int height) {
         this.x = x;
@@ -19,6 +20,8 @@ public abstract class GameObject {
 
     public abstract void draw(Graphics g); // Draw the object
 
+    protected abstract void drawDebug(Graphics g); // Draw the object in debug mode
+
     // Getters and setters for position, size, and visibility
     public int getX() { return x; }
     public void setX(int x) { this.x = x; }
@@ -30,4 +33,5 @@ public abstract class GameObject {
     public void setHeight(int height) { this.height = height; }
     public boolean isVisible() { return isVisible; }
     public void setVisible(boolean isVisible) { this.isVisible = isVisible; }
+    public void toggleDebug() { debug = !debug; }
 }
