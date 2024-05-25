@@ -19,27 +19,35 @@ public class Cannon extends GameObject {
 
     // Define the current mouse position
     private Point currentMousePos;
+    private Point mousePosOnPress;
+    private Point mousePosOnRelease;
 
+    // Define the debug mode
+    boolean debug = false;
 
-//    private Point mousePress;
-//    private Point mouseRelease;
-
-
-    // Constructor for the Cannon class of default width and height
+    // Constructor for the Cannon of default width and height
     public Cannon(int x, int y, Point currentMousePos) {
+        // Call the parent constructor
         super(x, y, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
+        // Initialize the mouse position
         this.currentMousePos = currentMousePos;
+        this.mousePosOnPress = currentMousePos;
+        this.mousePosOnRelease = currentMousePos;
 
         // Initialize the angle and power
         calculateAngleAndPower();
     }
 
-    // Constructor for the Cannon class of custom width and height
+    // Constructor for the Cannon of custom width and height
     public Cannon(int x, int y, int width, int height, Point currentMousePos) {
+        // Call the parent constructor
         super(x, y, width, height);
 
+        // Initialize the mouse position
         this.currentMousePos = currentMousePos;
+        this.mousePosOnPress = currentMousePos;
+        this.mousePosOnRelease = currentMousePos;
 
         // Initialize the angle and power
         calculateAngleAndPower();
@@ -85,31 +93,45 @@ public class Cannon extends GameObject {
         g.setColor(BORDER_COLOR);
         g.drawArc(barrelRelaticeXPos, barrelRelativeYPos, barrelRelativeWidth, barrelRelativeHeight, startAngleDegrees, 180);
 
+        // Draw the debug information
+        if (debug) {
+            drawDebug(g);
+        }
+    }
 
+    private void drawDebug(Graphics g) {
+        // Draw the mouse press and release points
+        g.setColor(Color.RED);
+        g.fillOval(mousePosOnPress.x - 5, mousePosOnPress.y - 5, 10, 10);
+        g.drawString("Mouse Press", mousePosOnPress.x + 10, mousePosOnPress.y + 10);
 
-//        // Draw the cannon barrel
-//        int x1 = 25;
-//        int y1 = 25;
-//        int x2 = (int) (x1 + 20 * Math.cos(angle));
-//        int y2 = (int) (y1 + 20 * Math.sin(angle));
-//        g.drawLine(x1, y1, x2, y2);
-//
-//        // Draw the power indicator
-//        g.setColor(Color.BLUE);
-//        g.fillRect(0, 50, (int) power, 10);
-//
-        // Draw the angle indicator
+        // Draw the mouse press and release points
         g.setColor(Color.GREEN);
-        g.drawString("Angle: " + Math.toDegrees(angle), 0, 70);
-//
-//        // Draw the power indicator
-//        g.setColor(Color.GREEN);
-//        g.drawString("Power: " + power, 0, 90);
-//
-//        // Draw the mouse press and release points
-//        g.setColor(Color.RED);
-//        g.fillOval(mousePress.x - 5, mousePress.y - 5, 10, 10);
-//        g.fillOval(mouseRelease.x - 5, mouseRelease.y - 5, 10, 10);
+        g.fillOval(mousePosOnRelease.x - 5, mousePosOnRelease.y - 5, 10, 10);
+        g.drawString("Mouse Release", mousePosOnRelease.x + 10, mousePosOnRelease.y + 10);
+
+        // Draw the current mouse position
+        g.setColor(Color.BLUE);
+        g.fillOval(currentMousePos.x - 5, currentMousePos.y - 5, 10, 10);
+        g.drawString("Current Mouse", currentMousePos.x + 10, currentMousePos.y + 10);
+
+        // Vector from press to current mouse position (current rotation vector)
+        g.setColor(Color.BLACK);
+        g.drawLine(mousePosOnPress.x, mousePosOnPress.y, currentMousePos.x, currentMousePos.y);
+        g.drawString("dx: " + (currentMousePos.x - mousePosOnPress.x), currentMousePos.x + 10, currentMousePos.y + 30);
+        g.drawString("dy: " + (currentMousePos.y - mousePosOnPress.y), currentMousePos.x + 10, currentMousePos.y + 50);
+
+        // Vector from press to release position (final rotation & power vector)
+        g.setColor(Color.MAGENTA);
+        g.drawLine(mousePosOnPress.x, mousePosOnPress.y, mousePosOnRelease.x, mousePosOnRelease.y);
+        g.drawString("dx: " + (mousePosOnRelease.x - mousePosOnPress.x), mousePosOnRelease.x + 10, mousePosOnRelease.y + 30);
+        g.drawString("dy: " + (mousePosOnRelease.y - mousePosOnPress.y), mousePosOnRelease.x + 10, mousePosOnRelease.y + 50);
+
+        // Vector from center of cannon to release position (shoot vector)
+        g.setColor(Color.GREEN);
+        g.drawLine(x + width / 2, y + height / 2, mousePosOnRelease.x, mousePosOnRelease.y);
+        g.drawString("dx: " + (mousePosOnRelease.x - x - width / 2), mousePosOnRelease.x + 10, mousePosOnRelease.y + 80);
+        g.drawString("dy: " + (mousePosOnRelease.y - y - height / 2), mousePosOnRelease.x + 10, mousePosOnRelease.y + 100);
     }
 
     private void calculateAngleAndPower() {
@@ -133,8 +155,19 @@ public class Cannon extends GameObject {
 //    }
 
 
-    // Call this method when the mouse is moved
     public void setCurrentMousePos(Point p) {
         currentMousePos = p;
+    }
+
+    public void setMousePosOnPress(Point p) {
+        mousePosOnPress = p;
+    }
+
+    public void setMousePosOnRelease(Point p) {
+        mousePosOnRelease = p;
+    }
+
+    public void toggleDebug() {
+        this.debug = !this.debug;
     }
 }

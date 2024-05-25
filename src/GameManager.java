@@ -5,7 +5,7 @@ import java.awt.event.*;
 import gameobjects.Ball;
 import gameobjects.Cannon;
 
-public class GameManager extends JPanel implements ActionListener, MouseListener, MouseMotionListener {
+public class GameManager extends JPanel implements ActionListener, KeyListener, MouseListener, MouseMotionListener {
     private final int PANEL_WIDTH = 800;
     private final int PANEL_HEIGHT = 600;
     private Timer timer;
@@ -17,8 +17,10 @@ public class GameManager extends JPanel implements ActionListener, MouseListener
 
     public GameManager() {
         setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT)); // Set the size of the panel
+        setFocusable(true); // Set the panel to be focusable
 
-        // Register mouse listeners
+        // Register key & mouse listeners
+        addKeyListener(this);
         addMouseListener(this);
         addMouseMotionListener(this);
 
@@ -84,16 +86,29 @@ public class GameManager extends JPanel implements ActionListener, MouseListener
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {}
+    public void keyTyped(KeyEvent e) {
+        // Toggle debug mode
+        if (e.getKeyChar() == 'd') {
+            System.out.println("Toggling debug mode");
+            cannon.toggleDebug();
+        }
+    }
 
     @Override
-    public void mouseReleased(MouseEvent e) {}
+    public void keyPressed(KeyEvent e) {}
 
     @Override
-    public void mouseMoved(MouseEvent e) {}
+    public void keyReleased(KeyEvent e) {}
 
     @Override
-    public void mouseDragged(MouseEvent e) {
+    public void mousePressed(MouseEvent e) {
+        cannon.setMousePosOnPress(e.getPoint());
+        cannon.setCurrentMousePos(e.getPoint());
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        cannon.setMousePosOnRelease(e.getPoint());
         cannon.setCurrentMousePos(e.getPoint());
     }
 
@@ -105,4 +120,12 @@ public class GameManager extends JPanel implements ActionListener, MouseListener
 
     @Override
     public void mouseExited(MouseEvent e) {}
+
+    @Override
+    public void mouseMoved(MouseEvent e) {}
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        cannon.setCurrentMousePos(e.getPoint());
+    }
 }
