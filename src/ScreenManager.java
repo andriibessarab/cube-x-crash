@@ -63,5 +63,4 @@ public class ScreenManager extends JPanel implements ActionListener {
         this.revalidate();
         this.repaint();
     }
-
 }

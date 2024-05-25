@@ -1,11 +1,16 @@
 package screens;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Objects;
 
 
 public abstract class Screen extends JPanel implements ActionListener, KeyListener, MouseListener, MouseMotionListener {
@@ -27,5 +32,11 @@ public abstract class Screen extends JPanel implements ActionListener, KeyListen
         addMouseMotionListener(this);
     }
 
-    public abstract void update();
+    protected BufferedImage loadImage(String url) {
+        try {
+            return ImageIO.read(Objects.requireNonNull(getClass().getResource(url)));
+        } catch (IOException e) {
+            throw new RuntimeException("Error loading image: " + url, e);
+        }
+    }
 }
