@@ -4,6 +4,7 @@ import file_manager.FileManager;
 import gameobjects.Ball;
 import gameobjects.Cannon;
 import gameobjects.bricks.Brick;
+import gameobjects.bricks.ExtraBall;
 import gameobjects.bricks.SquareBrick;
 import gameobjects.bricks.TriangleBrick;
 
@@ -34,6 +35,7 @@ public class GameScreen extends Screen {
 
     private ImageIcon gameFrame;
     private ImageIcon coinIcon;
+    private ImageIcon ballImage;
     private final ImageIcon bgImage;
 
     private java.util.List<Ball> balls;
@@ -50,14 +52,12 @@ public class GameScreen extends Screen {
     private FileManager fileManager;
     private int currScore = 0, ballCount = DEFAULT_NUM_BALLS;
     private int numCoins, highScore;
-    private final Clip brickHitClip, brickBreakClip;
+    private final Clip brickHitClip, brickBreakClip, extraBallClip;
 
 
 
     public GameScreen(int width, int height, ScreenChangeListener listener) {
         super(width, height, listener);
-
-        bgImage = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/main_menu/bg2.gif")));
 
         // set initial shooting position to be in middle of game area
         shootingPosition = new Point(PANEL_WIDTH / 2, GAME_Y + GAME_HEIGHT - 50);
@@ -71,14 +71,16 @@ public class GameScreen extends Screen {
             customFont = Font.createFont(Font.TRUETYPE_FONT, new File("src/assets/fonts/superchargelaser.otf"));
             // Register the font
             System.out.println("fonttt: " + customFont.getName());
-//            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-//            ge.registerFont(customFont);
         } catch (IOException | FontFormatException e) {
             // Handle exception
         }
 
+        bgImage = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/main_menu/bg2.gif")));
+        ballImage = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/ball.gif")));
+
         brickHitClip = loadSoundClip("/assets/sounds/brick_hit.wav");
         brickBreakClip = loadSoundClip("/assets/sounds/brick_break.wav");
+        extraBallClip = loadSoundClip("/assets/sounds/extra_ball.wav");
     }
 
     @Override
@@ -90,6 +92,7 @@ public class GameScreen extends Screen {
 
         gameFrame = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/game_frame.png")));
         coinIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/coin.webp")));
+
 
         balls = new java.util.ArrayList<>();
         bricks = new Brick[GAME_ROWS][GAME_COLS];
@@ -125,10 +128,13 @@ public class GameScreen extends Screen {
         for (int j = 0; j < GAME_COLS; j++) {
             if(Math.random() > probability/100.0)
                 continue;
-            if(Math.random() > 0.4)
+            double n = Math.random();
+            if(n > .4)
                 bricks[row][j] = new SquareBrick(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, 8);
-            else
+            else if (n > .08)
                 bricks[row][j] = new TriangleBrick(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, 8);
+            else
+                bricks[row][j] = new ExtraBall(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, 1);
             filledColumns++;
         }
     }
@@ -151,14 +157,17 @@ public class GameScreen extends Screen {
             }
         }
 
-        System.out.println("balls: " + customFont.getName());
-
-        // draw score
+        // Draw the score
         g.setColor(Color.WHITE);
         g.setFont(customFont.deriveFont(30f));
         g.drawString("Score: " + currScore, 1150, 80);
         g.setFont(customFont.deriveFont(20f));
         g.drawString("High Score: " + highScore, 1150, 104);
+
+        // Draw the ball count
+        g.setFont(customFont.deriveFont(30f));
+        g.drawImage(ballImage.getImage(), 175, 790, 50, 50, null);
+        g.drawString("Balls: " + ballCount, 234, 824);
 
         cannon.draw(g);
     }
@@ -210,8 +219,16 @@ public class GameScreen extends Screen {
                         currScore += 10;
 
                         if (value.isDestroyed()) {
-                            brickBreakClip.setFramePosition(0);
-                            brickBreakClip.start();
+                            // If of class ExtraBall, add a ball
+                            if(value instanceof ExtraBall) {
+                                ballCount++;
+                                extraBallClip.setFramePosition(0);
+                                extraBallClip.start();
+                            }
+                            else {
+                                brickBreakClip.setFramePosition(0);
+                                brickBreakClip.start();
+                            }
                             bricks[i][j] = null;
                         } else {
                             brickHitClip.setFramePosition(0);
