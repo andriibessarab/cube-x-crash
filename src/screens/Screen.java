@@ -12,6 +12,7 @@ public abstract class Screen extends JPanel implements ActionListener, KeyListen
     protected final int PANEL_WIDTH;
     protected final int PANEL_HEIGHT;
     protected ScreenChangeListener screenChangeListener;
+    protected Timer timer;
 
     public Screen(int width, int height, ScreenChangeListener listener) {
         this.PANEL_WIDTH = width;
@@ -19,6 +20,10 @@ public abstract class Screen extends JPanel implements ActionListener, KeyListen
         this.screenChangeListener = listener;
         initJPanel();
         initializeComponents();
+
+        // Create a timer to update the game state
+        timer = new Timer(10, this);
+        timer.start();
     }
 
     protected void initJPanel() {

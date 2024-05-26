@@ -1,6 +1,6 @@
 package screencomponents;
 
-import gameobjects.Brick;
+import gameobjects.bricks.Brick;
 import java.awt.*;
 import java.util.ArrayList;
 

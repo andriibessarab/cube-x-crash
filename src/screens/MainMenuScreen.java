@@ -58,11 +58,12 @@ public class MainMenuScreen extends Screen {
         shopButtonImage = loadImage("/assets/main_menu/button_shop.png");
 
         // Load sounds
+        backgroundMusicClip = loadSoundClip("/assets/sounds/lobby_track.wav");
         hoverSoundClip = loadSoundClip("/assets/sounds/button_hover.wav");
         buttonPressSoundClip = loadSoundClip("/assets/sounds/button_press.wav");
 
         // Load and play background music
-        backgroundMusicClip = loadSoundClip("/assets/sounds/lobby_track.wav");
+
         if (backgroundMusicClip != null) {
             backgroundMusicClip.loop(Clip.LOOP_CONTINUOUSLY); // Play continuously
             backgroundMusicClip.start();
