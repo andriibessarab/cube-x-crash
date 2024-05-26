@@ -30,6 +30,7 @@ bin/
 
 ### JetBrains ###
 .idea/
+.run/
 *.iml
 *.ipr
 *.iws
