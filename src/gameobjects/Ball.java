@@ -33,8 +33,6 @@ public class Ball extends GameObject {
         x += speedX;
         y += speedY;
 
-        System.out.println("Ball x: " + x + " Ball y: " + y);
-
         // Collision detection with the borders
         if (x <= GameScreen.GAME_X || x >= GameScreen.GAME_X + GameScreen.GAME_WIDTH - width) {
             speedX = -speedX; // Reverse direction on X-axis
@@ -59,8 +57,8 @@ public class Ball extends GameObject {
     }
 
     public void bounceOff() {
-        speedX = -speedX;
-        speedY = -speedY;
+        speedX = -speedX + (int) (Math.random() * 2);
+        speedY = -speedY + (int) (Math.random() * 2);
     }
 
 //    public void bounceOff(Ball o) {

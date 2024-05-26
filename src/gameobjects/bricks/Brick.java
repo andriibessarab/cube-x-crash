@@ -28,4 +28,8 @@ public abstract class Brick extends GameObject {
             isDestroyed = true;
         }
     }
+
+    public void moveDown(int distance) {
+        y += distance;
+    }
 }

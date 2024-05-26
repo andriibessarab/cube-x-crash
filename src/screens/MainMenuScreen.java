@@ -151,7 +151,6 @@ public class MainMenuScreen extends Screen {
             // Play button press sound effect
             buttonPressSoundClip.setFramePosition(0); // Rewind to the beginning
             buttonPressSoundClip.start();
-            System.out.println("Levels button pressed");
         }
 
         // Check if Infinite Mode button is clicked
@@ -170,7 +169,6 @@ public class MainMenuScreen extends Screen {
             // Play button press sound effect
             buttonPressSoundClip.setFramePosition(0); // Rewind to the beginning
             buttonPressSoundClip.start();
-            System.out.println("Shop button pressed");
         }
     }
 
@@ -203,5 +201,20 @@ public class MainMenuScreen extends Screen {
     private boolean isMouseOverButton(int mouseX, int mouseY, int buttonX, int buttonY) {
         return mouseX >= buttonX && mouseX <= (buttonX + BUTTON_WIDTH) &&
                 mouseY >= buttonY && mouseY <= (buttonY + BUTTON_HEIGHT);
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
     }
 }

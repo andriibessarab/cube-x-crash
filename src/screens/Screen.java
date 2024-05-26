@@ -59,21 +59,6 @@ public abstract class Screen extends JPanel implements ActionListener, KeyListen
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {
-        // Default implementation, can be overridden
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        // Default implementation, can be overridden
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-        // Default implementation, can be overridden
-    }
-
-    @Override
     public void mouseClicked(MouseEvent e) {
         // Default implementation, can be overridden
     }
