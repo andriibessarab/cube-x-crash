@@ -34,7 +34,7 @@ public class GameScreen extends Screen {
 
     private Point shootingPosition;
     private boolean turnOngoing;
-    private boolean blocksMovedDown = false; // Add this flag
+    private boolean blocksMovedDown = true; // Add this flag
     private Point nextShootingPosition;
     private int likelihoodOfNewBrick = 20;
     private boolean isPaused = false;
@@ -66,6 +66,10 @@ public class GameScreen extends Screen {
                 bricks[i][j] = squareBrick;
             }
         }
+
+        for (int i = 0; i < 3; i++) {
+            fillRow(i, likelihoodOfNewBrick);
+        }
     }
 
     @Override
@@ -78,6 +82,23 @@ public class GameScreen extends Screen {
         balls.clear();
         bricks = new Brick[GAME_ROWS][GAME_COLS];
         turnOngoing = false;
+
+        // fill in first three rows
+        for (int i = 0; i < 3; i++) {
+            fillRow(i, likelihoodOfNewBrick);
+        }
+    }
+
+    // FIll a row with bricks
+    private void fillRow(int row, int probability) {
+        int filledColumns = 0;
+        for (int j = 0; j < GAME_COLS; j++) {
+            if(Math.random() > probability/100.0)
+                continue;
+            squareBrick = new SquareBrick(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, 8);
+            bricks[row][j] = squareBrick;
+            filledColumns++;
+        }
     }
 
     @Override
@@ -128,12 +149,12 @@ public class GameScreen extends Screen {
                 break;
             }
 
-            for (Ball ball2 : balls) {
-                if (ball != ball2 && ball.isCollidingWith(ball2)) {
-                    ball.bounceOff();
-                    ball2.bounceOff();
-                }
-            }
+//            for (Ball ball2 : balls) {
+//                if (ball != ball2 && ball.isCollidingWith(ball2)) {
+//                    ball.bounceOff();
+//                    ball2.bounceOff();
+//                }
+//            }
 
             // Check for collisions of balls with bricks
             for (int i = 0; i < bricks.length; i++) {
@@ -165,9 +186,9 @@ public class GameScreen extends Screen {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (count < 10) {
-                    int velocityX = (int) (velocityMagnitude * Math.cos(angle - Math.PI / 2));
-                    int velocityY = -(int) (velocityMagnitude * Math.sin(angle - Math.PI / 2));
+                if (count < 30) {
+                    int velocityX = (int) (velocityMagnitude * Math.cos(angle - Math.PI / 2)) * 3;
+                    int velocityY = -(int) (velocityMagnitude * Math.sin(angle - Math.PI / 2)) * 3;
 
                     Ball newBall = new Ball(shootingPosition.x + count * spacing, shootingPosition.y, 30, velocityX, velocityY, Color.RED, PANEL_WIDTH, PANEL_HEIGHT);
                     balls.add(newBall);
@@ -196,25 +217,18 @@ public class GameScreen extends Screen {
 
     // Shift all blocks down by one row and generate new blocks in the top row
     private void moveBlocksDown() {
-        // Move all blocks down by one row
+        // Move all blocks down by one row in array
         for (int i = GAME_ROWS - 1; i > 0; i--) {
             for (int j = 0; j < GAME_COLS; j++) {
-                if (bricks[i-1][j] == null) {
-                    continue;
-                }
-                bricks[i-1][j].moveDown(SQUARE_BLOCK_SIDE);
                 bricks[i][j] = bricks[i - 1][j];
-
+                bricks[i - 1][j] = null;
+                if(bricks[i][j] != null)
+                    bricks[i][j].moveDown(SQUARE_BLOCK_SIDE);
             }
         }
 
         // Generate new blocks in the top row
-        for (int j = 0; j < GAME_COLS; j++) {
-            if(Math.random() > likelihoodOfNewBrick/100.0)
-                continue;
-            squareBrick = new SquareBrick(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, 8);
-            bricks[0][j] = squareBrick;
-        }
+        fillRow(0, likelihoodOfNewBrick);
     }
 
     public void togglePause() {
@@ -241,13 +255,13 @@ public class GameScreen extends Screen {
         System.out.println(e.getKeyChar());
 
         // Toggle debug mode
-        if (e.getKeyChar() == 'd') {
+        if (e.getKeyChar() == KeyEvent.VK_D) {
             cannon.toggleDebug();
             for (Ball ball : balls) {
                 ball.toggleDebug();
             }
         }
-        if (e.getKeyChar() == 'r') {
+        if (e.getKeyChar() == KeyEvent.VK_R) {
             reset();
         }
 

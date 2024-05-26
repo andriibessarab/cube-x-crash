@@ -57,8 +57,8 @@ public class Ball extends GameObject {
     }
 
     public void bounceOff() {
-        speedX = -speedX + (int) (Math.random() * 2);
-        speedY = -speedY + (int) (Math.random() * 2);
+        speedX = -speedX;
+        speedY = -speedY;
     }
 
 //    public void bounceOff(Ball o) {
