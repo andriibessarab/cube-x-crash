@@ -6,7 +6,7 @@ public abstract class GameObject {
     protected int x, y; // Position
     protected int width, height; // Size
     protected boolean isVisible; // Visibility flag
-    protected boolean debug = false; // Debug mode flag
+    protected boolean debug; // Debug mode flag
 
     public GameObject(int x, int y, int width, int height) {
         this.x = x;
@@ -14,6 +14,7 @@ public abstract class GameObject {
         this.width = width;
         this.height = height;
         this.isVisible = true;
+        this.debug = false;
     }
 
     public abstract void update(); // Update the object's state

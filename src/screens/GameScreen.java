@@ -9,19 +9,38 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 
 public class GameScreen extends Screen {
+    public final static int GAME_WIDTH = 1266;
+    public final static int GAME_HEIGHT = 632;
+    public final static int GAME_X = 169;
+    public final static int GAME_Y = 130;
+
+    private BufferedImage gameFrame;
+
     private java.util.List<Ball> balls;
     private java.util.List<Brick> bricks;
     private SquareBrick squareBrick;
     private Cannon cannon;
 
+    private Point shootingPosition;
+    private boolean turnOngoing;
+
     public GameScreen(int width, int height, ScreenChangeListener listener) {
         super(width, height, listener);
+
+        // Measured in photoshop
+
+
+        // set initial shooting position to be in middle of game area
+        shootingPosition = new Point(PANEL_WIDTH / 2, GAME_Y + GAME_HEIGHT - 50);
     }
 
     @Override
     protected void initializeComponents() {
+        gameFrame = loadImage("/assets/game/game_frame.png");
+
         balls = new java.util.ArrayList<>();
         bricks = new java.util.ArrayList<>();
 
@@ -47,6 +66,10 @@ public class GameScreen extends Screen {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+
+        g.drawImage(gameFrame, 0, 0, null);
+
+
         for (Ball ball : balls) {
             ball.draw(g);
         }
@@ -60,6 +83,11 @@ public class GameScreen extends Screen {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        // Check if all balls are out of bounds
+        if (balls.isEmpty()) {
+            turnOngoing = false;
+        }
+
 //        if (ballSpawnDelay > 0) {
 //            spawnBall(3, (int) (Math.PI*0.5));
 //            ballSpawnDelay--;
@@ -67,6 +95,20 @@ public class GameScreen extends Screen {
         for (Ball ball : balls) {
             ball.update();
 
+            // Remove ball if it goes out of bounds
+            if (ball.getY() > GAME_Y + GAME_HEIGHT - 40) {
+                balls.remove(ball);
+                break;
+            }
+
+//            for (Ball ball2 : balls) {
+//                if (ball != ball2 && ball.isCollidingWith(ball2)) {
+//                    ball.bounceOff(ball2);
+//                    ball2.bounceOff(ball);
+//                }
+//            }
+
+            // Check for collisions of balls with bricks
             for (Brick brick : bricks) {
                 if (ball.isCollidingWith(brick) && !brick.isDestroyed()) {
                     brick.hit(1);
@@ -85,8 +127,7 @@ public class GameScreen extends Screen {
         int velocityX = (int) (velocityMagnitude * Math.cos(angle-Math.PI/2));
         int velocityY = -(int) (velocityMagnitude * Math.sin(angle-Math.PI/2));
 
-        // Assuming Ball constructor takes the initial x, y position and direction
-        Ball newBall = new Ball(400, 300, 30, velocityX, velocityY, Color.RED, PANEL_WIDTH, PANEL_HEIGHT);
+        Ball newBall = new Ball(shootingPosition.x, shootingPosition.y, 30, velocityX, velocityY, Color.RED, PANEL_WIDTH, PANEL_HEIGHT);
         balls.add(newBall);
     }
 
@@ -103,12 +144,23 @@ public class GameScreen extends Screen {
 
     @Override
     public void mousePressed(MouseEvent e) {
+        // Prevent multiple shots in one turn
+        if (turnOngoing) {
+            return;
+        }
         cannon.setMousePosOnPress(e.getPoint());
         cannon.setCurrentMousePos(e.getPoint());
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        // Prevent multiple shots in one turn
+        if (turnOngoing) {
+            return;
+        }
+
+        turnOngoing = true;
+
         cannon.setMousePosOnRelease(e.getPoint());
         cannon.setCurrentMousePos(e.getPoint());
 

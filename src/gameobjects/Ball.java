@@ -1,6 +1,7 @@
 package gameobjects;
 
 import gameobjects.bricks.Brick;
+import screens.GameScreen;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +24,7 @@ public class Ball extends GameObject {
         this.parentWidth = parentWidth;
         this.parentHeight = parentHeight;
 
-        img = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game_objects/ball.gif")));
+        img = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/ball.gif")));
     }
 
     @Override
@@ -35,25 +36,42 @@ public class Ball extends GameObject {
         System.out.println("Ball x: " + x + " Ball y: " + y);
 
         // Collision detection with the borders
-        if (x <= 0 || x >= parentWidth - width) { // Assuming 'parentWidth' is the width of the game area
+        if (x <= GameScreen.GAME_X || x >= GameScreen.GAME_X + GameScreen.GAME_WIDTH - width) {
             speedX = -speedX; // Reverse direction on X-axis
         }
-        if (y <= 0 || y >= parentHeight - height) { // Assuming 'parentHeight' is the height of the game area
+        if (y <= GameScreen.GAME_Y || y >= GameScreen.GAME_Y + GameScreen.GAME_HEIGHT - height) {
             speedY = -speedY; // Reverse direction on Y-axis
         }
     }
 
-    public boolean isCollidingWith(Brick brick) {
-        return x < brick.getX() + brick.getWidth() &&
-                x + width > brick.getX() &&
-                y < brick.getY() + brick.getHeight() &&
-                y + height > brick.getY();
+    public boolean isCollidingWith(Brick o) {
+        return x < o.getX() + o.getWidth() &&
+                x + width > o.getX() &&
+                y < o.getY() + o.getHeight() &&
+                y + height > o.getY();
+    }
+
+    public boolean isCollidingWith(Ball o) {
+        return x < o.getX() + o.getWidth() &&
+                x + width > o.getX() &&
+                y < o.getY() + o.getHeight() &&
+                y + height > o.getY();
     }
 
     public void bounceOff() {
         speedX = -speedX;
         speedY = -speedY;
     }
+
+//    public void bounceOff(Ball o) {
+//        // Swap speeds of the two balls
+//        int tempSpeedX = speedX;
+//        int tempSpeedY = speedY;
+//        speedX = -o.speedX;
+//        speedY = -o.speedY;
+//        o.speedX = -tempSpeedX;
+//        o.speedY = -tempSpeedY;
+//    }
 
     @Override
     public void draw(Graphics g) {
