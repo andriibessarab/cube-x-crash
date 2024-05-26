@@ -15,7 +15,7 @@ public class SquareBrick extends Brick {
         g.setColor(java.awt.Color.RED);
         g.fillRect(x, y, width, height);
 
-        // draw brick'shealth
+        // draw brick's health
         g.setColor(Color.BLACK);
         g.drawString(Integer.toString(brickHealth), x + width / 2, y + height / 2);
 

@@ -19,10 +19,10 @@ public class GameScreen extends Screen {
     public final static int GAME_HEIGHT = 632;
     public final static int GAME_X = 169;
     public final static int GAME_Y = 130;
-    private final static int GAME_ROWS = 5;
-    private final static int ALLOCATED_AREA = 20;
-    private final static int SQUARE_BLOCK_SIDE =  (GAME_HEIGHT - ALLOCATED_AREA) / GAME_ROWS;
-    private final static int GAME_COLS = GAME_WIDTH / SQUARE_BLOCK_SIDE;
+
+    private final static int GAME_COLS = 16;
+    private final static int SQUARE_BLOCK_SIDE =  GAME_WIDTH / GAME_COLS;
+    private final static int GAME_ROWS = GAME_HEIGHT / SQUARE_BLOCK_SIDE;
 
 
     private ImageIcon gameFrame;
