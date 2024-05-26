@@ -85,21 +85,6 @@ public class MainMenuScreen extends Screen {
 
     }
 
-    // Method to load a sound clip
-    private Clip loadSoundClip(String soundFilePath) {
-        Clip soundClip = null;
-        try {
-            URL url = this.getClass().getResource(soundFilePath);
-            assert url != null;
-            AudioInputStream audioIn = AudioSystem.getAudioInputStream(url);
-            soundClip = AudioSystem.getClip();
-            soundClip.open(audioIn);
-        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-            throw new RuntimeException("Error loading sound clip: " + soundFilePath, e);
-        }
-        return soundClip;
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         // Call the parent method

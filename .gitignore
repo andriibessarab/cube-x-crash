@@ -36,3 +36,5 @@ bin/
 *.iws
 *.ids
 *.orig
+
+gameData.properties

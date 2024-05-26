@@ -1,11 +1,13 @@
 package screens;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Objects;
 
 public abstract class Screen extends JPanel implements ActionListener, KeyListener, MouseListener, MouseMotionListener {
@@ -50,6 +52,21 @@ public abstract class Screen extends JPanel implements ActionListener, KeyListen
         } catch (IOException e) {
             throw new RuntimeException("Error loading image: " + url, e);
         }
+    }
+
+    // Method to load a sound clip
+    protected Clip loadSoundClip(String soundFilePath) {
+        Clip soundClip = null;
+        try {
+            URL url = this.getClass().getResource(soundFilePath);
+            assert url != null;
+            AudioInputStream audioIn = AudioSystem.getAudioInputStream(url);
+            soundClip = AudioSystem.getClip();
+            soundClip.open(audioIn);
+        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+            throw new RuntimeException("Error loading sound clip: " + soundFilePath, e);
+        }
+        return soundClip;
     }
 
     // Override event methods if needed by derived classes

@@ -3,12 +3,13 @@ package gameobjects.bricks;
 import gameobjects.GameObject;
 
 public abstract class Brick extends GameObject {
+    protected int maxHealth;
     protected int brickHealth;
     protected boolean isDestroyed = false;
 
     public Brick(int x, int y, int width, int height, int health) {
         super(x, y, width, height);
-
+        maxHealth = health;
         brickHealth = health;
     }
 

@@ -36,9 +36,19 @@ public class Ball extends GameObject {
         // Collision detection with the borders
         if (x <= GameScreen.GAME_X || x >= GameScreen.GAME_X + GameScreen.GAME_WIDTH - width) {
             speedX = -speedX; // Reverse direction on X-axis
+            x += speedX;
         }
         if (y <= GameScreen.GAME_Y || y >= GameScreen.GAME_Y + GameScreen.GAME_HEIGHT - height) {
             speedY = -speedY; // Reverse direction on Y-axis
+            y += speedY;
+        }
+
+        // Never let y or x speed be 0 to avoid getting stuck
+        if (speedX == 0) {
+            speedX = 1;
+        }
+        if (speedY == 0) {
+            speedY = 1;
         }
     }
 
@@ -57,7 +67,6 @@ public class Ball extends GameObject {
     }
 
     public void bounceOff() {
-        speedX = -speedX;
         speedY = -speedY;
     }
 
