@@ -29,15 +29,15 @@ public class MainMenuScreen extends Screen {
     private final BufferedImage shopButtonImage;
 
     // Sounds
-    private Clip backgroundMusicClip;
+    private final Clip backgroundMusicClip;
     private final Clip hoverSoundClip;
     private final Clip buttonPressSoundClip;
 
     private String hoveredButton = ""; // The button being hovered over
 
-    public MainMenuScreen(int panelWidth, int panelHeight) {
+    public MainMenuScreen(int panelWidth, int panelHeight, ScreenChangeListener listener) {
         // Call the parent constructor
-        super(panelWidth, panelHeight);
+        super(panelWidth, panelHeight, listener);
 
         // Calculate button dimensions
         BUTTON_WIDTH = (int) (panelWidth * BUTTON_WIDTH_RATIO);
@@ -69,6 +69,21 @@ public class MainMenuScreen extends Screen {
         }
     }
 
+    @Override
+    protected void initializeComponents() {
+
+    }
+
+    @Override
+    public void update() {
+
+    }
+
+    @Override
+    public void stop() {
+
+    }
+
     // Method to load a sound clip
     private Clip loadSoundClip(String soundFilePath) {
         Clip soundClip = null;
@@ -79,7 +94,7 @@ public class MainMenuScreen extends Screen {
             soundClip = AudioSystem.getClip();
             soundClip.open(audioIn);
         } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error loading sound clip: " + soundFilePath, e);
         }
         return soundClip;
     }
@@ -124,36 +139,14 @@ public class MainMenuScreen extends Screen {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
-    }
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-    }
-
-    @Override
     public void mouseClicked(MouseEvent e) {
         // Get the mouse coordinates
         int mouseX = e.getX();
         int mouseY = e.getY();
 
-        // Assuming buttons are stacked vertically with 10 pixels spacing
-        int buttonX = PANEL_WIDTH / 2 - BUTTON_WIDTH / 2;
-        int levelsButtonY = PANEL_HEIGHT / 2 - BUTTON_HEIGHT / 2 - (int) (PANEL_HEIGHT * 0.05);
-        int infiniteModeButtonY = levelsButtonY + BUTTON_HEIGHT + 10;
-        int shopButtonY = infiniteModeButtonY + BUTTON_HEIGHT + 10;
-
         // Check if Levels button is clicked
-        if (mouseX >= buttonX && mouseX <= (buttonX + BUTTON_WIDTH) &&
-                mouseY >= levelsButtonY && mouseY <= (levelsButtonY + BUTTON_HEIGHT)) {
+        if (mouseX >= BUTTON_X && mouseX <= (BUTTON_X + BUTTON_WIDTH) &&
+                mouseY >= BUTTON_Y[0] && mouseY <= (BUTTON_Y[0] + BUTTON_HEIGHT)) {
             // Play button press sound effect
             buttonPressSoundClip.setFramePosition(0); // Rewind to the beginning
             buttonPressSoundClip.start();
@@ -161,42 +154,23 @@ public class MainMenuScreen extends Screen {
         }
 
         // Check if Infinite Mode button is clicked
-        if (mouseX >= buttonX && mouseX <= (buttonX + BUTTON_WIDTH) &&
-                mouseY >= infiniteModeButtonY && mouseY <= (infiniteModeButtonY + BUTTON_HEIGHT)) {
+        if (mouseX >= BUTTON_X && mouseX <= (BUTTON_X + BUTTON_WIDTH) &&
+                mouseY >= BUTTON_Y[1] && mouseY <= (BUTTON_Y[1] + BUTTON_HEIGHT)) {
             // Play button press sound effect
             buttonPressSoundClip.setFramePosition(0); // Rewind to the beginning
             buttonPressSoundClip.start();
+
+            screenChangeListener.changeScreen("game");
         }
 
         // Check if Shop button is clicked
-        if (mouseX >= buttonX && mouseX <= (buttonX + BUTTON_WIDTH) &&
-                mouseY >= shopButtonY && mouseY <= (shopButtonY + BUTTON_HEIGHT)) {
+        if (mouseX >= BUTTON_X && mouseX <= (BUTTON_X + BUTTON_WIDTH) &&
+                mouseY >= BUTTON_Y[2] && mouseY <= (BUTTON_Y[2] + BUTTON_HEIGHT)) {
             // Play button press sound effect
             buttonPressSoundClip.setFramePosition(0); // Rewind to the beginning
             buttonPressSoundClip.start();
             System.out.println("Shop button pressed");
         }
-    }
-
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent e) {
     }
 
     @Override
