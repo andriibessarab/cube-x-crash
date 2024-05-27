@@ -29,12 +29,20 @@ public class GameScreen extends Screen {
     private final static int SQUARE_BLOCK_SIDE =  GAME_WIDTH / GAME_COLS;
     private final static int GAME_ROWS = GAME_HEIGHT / SQUARE_BLOCK_SIDE;
 
+    private int UPGRADE_BUTTON_WIDTH = 110;
+    private int UPGRADE_BUTTON_HEIGHT = (int) (UPGRADE_BUTTON_WIDTH * 1.35); // Maintain aspect ratio
+    private int[] UPGRADE_BUTTON_X = {540, 740, 940};
+    private int UPGRADE_BUTTON_Y = 840;
+    private final float HOVER_OPACITY = 0.5f; // 50% transparency
+
     private final int DEFAULT_NUM_BALLS = 10, DEFAULT_LIKELIHOOD_OF_NEW_BRICK = 20, DEFAULT_AVG_HEALTH_FOR_BRICK = 8;
 
-    private ImageIcon gameFrame;
-    private ImageIcon coinIcon;
-    private ImageIcon ballImage;
+    private final ImageIcon gameFrame;
+    private final ImageIcon coinIcon;
+    private final ImageIcon ballImage;
     private final ImageIcon bgImage;
+    private final BufferedImage permanentBallUpgradeImage;
+    private final BufferedImage breakBottomRowUpgrade;
 
     private java.util.List<Ball> balls;
     private Brick[][] bricks;
@@ -51,10 +59,10 @@ public class GameScreen extends Screen {
     private int currScore = 0, ballCount = DEFAULT_NUM_BALLS;
     private boolean gameIsOver = false;
     private int numCoins, highScore;
-    private final Clip brickHitClip, brickBreakClip, extraBallClip;
-
+    private final Clip brickHitClip, brickBreakClip, extraBallClip, hoverSoundClip;
     private int avgHealthForBrick = DEFAULT_AVG_HEALTH_FOR_BRICK;
-
+    private String hoveredButton = ""; // The button being hovered over
+    private boolean soundOn;
 
 
     public GameScreen(int width, int height, ScreenChangeListener listener) {
@@ -74,12 +82,18 @@ public class GameScreen extends Screen {
             // Handle exception
         }
 
+
+        gameFrame = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/game_frame.png")));
+        coinIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/coin.gif")));
         bgImage = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/main_menu/bg2.gif")));
         ballImage = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/ball.gif")));
+        permanentBallUpgradeImage = loadImage("/assets/game/permanent_ball_upgrade.png");
+        breakBottomRowUpgrade = loadImage("/assets/game/break_bottom_row_upgrade.png");
 
         brickHitClip = loadSoundClip("/assets/sounds/brick_hit.wav");
         brickBreakClip = loadSoundClip("/assets/sounds/brick_break.wav");
         extraBallClip = loadSoundClip("/assets/sounds/extra_ball.wav");
+        hoverSoundClip = loadSoundClip("/assets/sounds/button_hover.wav");
     }
 
     @Override
@@ -89,14 +103,14 @@ public class GameScreen extends Screen {
         numCoins = fileManager.getCoins();
         highScore = fileManager.getHighScore();
 
-        gameFrame = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/game_frame.png")));
-        coinIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/coin.webp")));
-
 
         balls = new java.util.ArrayList<>();
         bricks = new Brick[GAME_ROWS][GAME_COLS];
 
         cannon = new Cannon(PANEL_WIDTH / 2 - Cannon.DEFAULT_WIDTH, PANEL_HEIGHT-40, new Point(PANEL_WIDTH / 2 - Cannon.DEFAULT_WIDTH/2, 0));
+
+        // Load the sound setting from the file
+        soundOn = fileManager.isSoundEnabled();
 
         repaint();
     }
@@ -184,22 +198,32 @@ public class GameScreen extends Screen {
         // Draw the ball count
         g.setFont(customFont.deriveFont(30f));
         g.drawImage(ballImage.getImage(), 175, 790, 50, 50, null);
-        g.drawString("Balls: " + ballCount, 234, 824);
+        g.drawString("Balls: " + ballCount, 234, 828);
+
+        // Draw the coin count
+        g.setFont(customFont.deriveFont(30f));
+        g.drawImage(coinIcon.getImage(), 1150, 785, 60, 60, null);
+        g.drawString("Coins: " + numCoins, 1215, 828);
 
         // Draw the game-over indicator row
         Color gameOverRowColor = new Color(196, 196, 243, 50); // Blue color with alpha for transparency
         g.setColor(gameOverRowColor);
         g.fillRect(GAME_X, GAME_Y+SQUARE_BLOCK_SIDE*(GAME_ROWS-1),  GAME_WIDTH, SQUARE_BLOCK_SIDE+1);
-
-        // draw a line on top that fades in and out
         g.setColor(new Color(196, 196, 243, (int) (Math.abs(Math.sin(System.currentTimeMillis() / 200.0) * 255))));
         g.drawLine(GAME_X, GAME_Y+SQUARE_BLOCK_SIDE*(GAME_ROWS-1), GAME_X+GAME_WIDTH, GAME_Y+SQUARE_BLOCK_SIDE*(GAME_ROWS-1));
+
+        // Draw buttons using the stored Y positions from the BUTTON_Y array
+        drawButton(g, permanentBallUpgradeImage, UPGRADE_BUTTON_X[0], UPGRADE_BUTTON_Y, "permanent-ball-upgrade", UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT, hoveredButton, HOVER_OPACITY);
+        drawButton(g, breakBottomRowUpgrade, UPGRADE_BUTTON_X[1], UPGRADE_BUTTON_Y, "break-row-upgrade", UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT, hoveredButton, HOVER_OPACITY);
+        drawButton(g, permanentBallUpgradeImage, UPGRADE_BUTTON_X[2], UPGRADE_BUTTON_Y, "clear-grid-upgrade", UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT, hoveredButton, HOVER_OPACITY);
 
         cannon.draw(g);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        soundOn = new FileManager().isSoundEnabled(); // for some reason only works when new instance of FileManager is created
+
         // Check if all balls are out of bounds
         if (balls.isEmpty()) {
             // Reset shooting position to the last ball's position
@@ -253,17 +277,27 @@ public class GameScreen extends Screen {
                             // If of class ExtraBall, add a ball
                             if(value instanceof ExtraBall) {
                                 ballCount++;
-                                extraBallClip.setFramePosition(0);
-                                extraBallClip.start();
+                                if(soundOn) {
+                                    extraBallClip.setFramePosition(0);
+                                    extraBallClip.start();
+                                }
+                            } else if(value instanceof Coin) {
+                                numCoins++;
+                                fileManager.saveCoins(numCoins);
                             }
                             else {
-                                brickBreakClip.setFramePosition(0);
-                                brickBreakClip.start();
+                                if(soundOn) {
+                                    brickBreakClip.setFramePosition(0);
+                                    brickBreakClip.start();
+                                }
                             }
                             bricks[i][j] = null;
                         } else {
-                            brickHitClip.setFramePosition(0);
-                            brickHitClip.start();
+                            if(soundOn) {
+                                brickHitClip.setFramePosition(0);
+                                brickHitClip.start();
+                            }
+
                             ball.bounceOff();
                         }
                     }
@@ -423,5 +457,32 @@ public class GameScreen extends Screen {
             turnOngoing = false;
         }
         cannon.setCurrentMousePos(e.getPoint());
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        int mouseX = e.getX();
+        int mouseY = e.getY();
+
+        // Check which button is being hovered over
+        String previousHoveredButton = hoveredButton;
+        hoveredButton = "";
+        for (int i = 0; i < UPGRADE_BUTTON_X.length; i++) {
+            if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[i], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT)) {
+                switch (i) {
+                    case 0 -> hoveredButton = "permanent-ball-upgrade";
+                    case 1 -> hoveredButton = "break-row-upgrade";
+                    case 2 -> hoveredButton = "clear-grid-upgrade";
+                }
+                // Only play the sound if the hovered button has changed
+                if (!hoveredButton.equals(previousHoveredButton)) {
+                    if (soundOn) {
+                        hoverSoundClip.setFramePosition(0); // Rewind to the beginning
+                        hoverSoundClip.start();
+                    }
+                }
+                break; // Exit the loop after finding the hovered button
+            }
+        }
     }
 }

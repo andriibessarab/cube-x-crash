@@ -42,13 +42,13 @@ public class FileManager {
         return Integer.parseInt(properties.getProperty("coins", "0"));
     }
 
-    public void saveUnlockedLevels(int levels) {
-        properties.setProperty("unlockedLevels", String.valueOf(levels));
+    public void saveSoundEnabled(boolean soundEnabled) {
+        properties.setProperty("soundEnabled", String.valueOf(soundEnabled));
         saveProperties();
     }
 
-    public int getUnlockedLevels() {
-        return Integer.parseInt(properties.getProperty("unlockedLevels", "0"));
+    public boolean isSoundEnabled() {
+        return Boolean.parseBoolean(properties.getProperty("soundEnabled", "true"));
     }
 
     private void saveProperties() {

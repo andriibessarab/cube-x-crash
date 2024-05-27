@@ -69,6 +69,33 @@ public abstract class Screen extends JPanel implements ActionListener, KeyListen
         return soundClip;
     }
 
+    // Draw a button on the screen
+    protected void drawButton(Graphics g, BufferedImage buttonImage, int x, int y, String buttonName, int BUTTON_WIDTH, int BUTTON_HEIGHT, String hoveredButton, float HOVER_OPACITY) {
+        // Apply dark filter if the button is being hovered over
+        if (buttonName.equals(hoveredButton)) {
+            buttonImage = applyDarkFilter(buttonImage, HOVER_OPACITY);
+        }
+
+        g.drawImage(buttonImage, x, y, BUTTON_WIDTH, BUTTON_HEIGHT, this);
+    }
+
+    // Apply a dark filter to an image
+    protected BufferedImage applyDarkFilter(BufferedImage originalImage, float HOVER_OPACITY) {
+        BufferedImage darkImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = darkImage.createGraphics();
+        g2d.drawImage(originalImage, 0, 0, null);
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, HOVER_OPACITY));
+        g2d.setColor(new Color(0, 0, 0, 127)); // Dark shade
+        g2d.fillRect(0, 0, darkImage.getWidth(), darkImage.getHeight());
+        g2d.dispose();
+        return darkImage;
+    }
+
+    protected boolean isMouseOverButton(int mouseX, int mouseY, int buttonX, int buttonY, int BUTTON_WIDTH, int BUTTON_HEIGHT) {
+        return mouseX >= buttonX && mouseX <= (buttonX + BUTTON_WIDTH) &&
+                mouseY >= buttonY && mouseY <= (buttonY + BUTTON_HEIGHT);
+    }
+
     // Override event methods if needed by derived classes
     @Override
     public void actionPerformed(ActionEvent e) {

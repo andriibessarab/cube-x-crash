@@ -1,7 +1,4 @@
-import screens.GameScreen;
-import screens.MainMenuScreen;
-import screens.Screen;
-import screens.ScreenChangeListener;
+import screens.*;
 
 import javax.swing.*;
 import java.awt.*;
