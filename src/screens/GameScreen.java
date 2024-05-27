@@ -43,6 +43,7 @@ public class GameScreen extends Screen {
     private final ImageIcon bgImage;
     private final BufferedImage permanentBallUpgradeImage;
     private final BufferedImage breakBottomRowUpgrade;
+    private final BufferedImage clearGridUpgrade;
 
     private java.util.List<Ball> balls;
     private Brick[][] bricks;
@@ -95,6 +96,7 @@ public class GameScreen extends Screen {
         ballImage = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/ball.gif")));
         permanentBallUpgradeImage = loadImage("/assets/game/permanent_ball_upgrade.png");
         breakBottomRowUpgrade = loadImage("/assets/game/break_bottom_row_upgrade.png");
+        clearGridUpgrade = loadImage("/assets/game/clear_grid_upgrade.png");
 
         brickHitClip = loadSoundClip("/assets/sounds/brick_hit.wav");
         brickBreakClip = loadSoundClip("/assets/sounds/brick_break.wav");
@@ -225,7 +227,7 @@ public class GameScreen extends Screen {
         // Draw buttons using the stored Y positions from the BUTTON_Y array
         drawButton(g, permanentBallUpgradeImage, UPGRADE_BUTTON_X[0], UPGRADE_BUTTON_Y, "permanent-ball-upgrade", UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT, hoveredButton, HOVER_OPACITY);
         drawButton(g, breakBottomRowUpgrade, UPGRADE_BUTTON_X[1], UPGRADE_BUTTON_Y, "break-row-upgrade", UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT, hoveredButton, HOVER_OPACITY);
-        drawButton(g, permanentBallUpgradeImage, UPGRADE_BUTTON_X[2], UPGRADE_BUTTON_Y, "clear-grid-upgrade", UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT, hoveredButton, HOVER_OPACITY);
+        drawButton(g, clearGridUpgrade, UPGRADE_BUTTON_X[2], UPGRADE_BUTTON_Y, "clear-grid-upgrade", UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT, hoveredButton, HOVER_OPACITY);
 
         cannon.draw(g);
     }
@@ -397,9 +399,7 @@ public class GameScreen extends Screen {
 
 
     @Override
-    public void keyTyped(KeyEvent e) {
-
-    }
+    public void keyTyped(KeyEvent e) {}
 
     @Override
     public void keyPressed(KeyEvent e) {
@@ -436,6 +436,7 @@ public class GameScreen extends Screen {
 
         // Check if the mouse is inside the game area
         if (mouseX >= GAME_X && mouseX <= GAME_X + GAME_WIDTH && mouseY > GAME_Y && mouseY < GAME_Y + GAME_HEIGHT) {
+            // Only allow shooting if there are no balls in play(meaning the turn is over)
             if (balls.isEmpty()) {
                 cannon.setMousePressed(true);
             }
@@ -444,9 +445,12 @@ public class GameScreen extends Screen {
             if (turnOngoing) {
                 return;
             }
+
+            // Set the mouse position on press and the current mouse position
             cannon.setMousePosOnPress(e.getPoint());
             cannon.setCurrentMousePos(e.getPoint());
         } else {
+            // Extra ball upgrade
             if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[0], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT)) {
                 if (numCoins >= 50) {
                     // Play button press sound effect
@@ -473,6 +477,7 @@ public class GameScreen extends Screen {
                 }
             }
 
+            // Break bottom row
             if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[1], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT)) {
                 if (numCoins >= 10) {
                     boolean brickFound = false;
@@ -522,6 +527,53 @@ public class GameScreen extends Screen {
 //                            }
 //                        }
 //                    }
+            }
+
+            // Clear the entire grid
+            if(isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[2], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT)) {
+                boolean bricksPresent = false;
+                // Check if any bricks are present
+                for (int i = 0; i < GAME_ROWS && !bricksPresent; i++) {
+                    for (int j = 0; j < GAME_COLS && !bricksPresent; j++) {
+                        if (bricks[i][j] != null) {
+                            bricksPresent = true;
+                        }
+                    }
+                }
+
+                // Play error sound effect if not enough coins
+                if (numCoins < 30 && soundOn) {
+                    errorPurchaseSoundClip.stop();
+                    errorPurchaseSoundClip.setFramePosition(0); // Rewind to the beginning
+                    errorPurchaseSoundClip.start();
+                }
+
+                if (bricksPresent && numCoins >= 30) {
+                    // Play success sound effect
+                    if (soundOn) {
+                        successPurchaseSoundClip.stop();
+                        successPurchaseSoundClip.setFramePosition(0); // Rewind to the beginning
+                        successPurchaseSoundClip.start();
+                    }
+
+                    numCoins -= 30;
+                    fileManager.saveCoins(numCoins);
+                    // Clear all bricks from the grid
+                    for (int i = 0; i < GAME_ROWS; i++) {
+                        for (int j = 0; j < GAME_COLS; j++) {
+                            if (bricks[i][j] != null) {
+                                currScore += bricks[i][j].getHealth() * 10;
+                                highScore = Math.max(highScore, currScore);
+                                fileManager.saveHighScore(highScore);
+                                bricks[i][j] = null;
+                            }
+                        }
+                    }
+
+                    // Fill top two rows with new bricks
+                    fillRow(0, likelihoodOfNewBrick);
+                    fillRow(1, likelihoodOfNewBrick);
+                }
             }
         }
     }
