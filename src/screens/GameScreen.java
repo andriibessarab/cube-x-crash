@@ -58,7 +58,6 @@ public class GameScreen extends Screen {
     private Point shootingPosition;
     private boolean turnOngoing;
     private boolean blocksMovedDown = true; // Add this flag
-    private Point nextShootingPosition;
     private int likelihoodOfNewBrick = DEFAULT_LIKELIHOOD_OF_NEW_BRICK;
     private boolean isPaused = false;
     private Font customFont;
@@ -79,7 +78,9 @@ public class GameScreen extends Screen {
     private String hoveredButton = ""; // The button being hovered over
     private boolean soundOn;
     private int defaultNumberOfBalls; // Number of balls to start with
-    private boolean nextShootingPositionSet = true;
+    private boolean ballsSpawned = false;
+    private boolean mousePressedOutsideGameArea = false;
+    private boolean firstBallBroken = false;
 
 
     public GameScreen(int width, int height, ScreenChangeListener listener) {
@@ -100,8 +101,6 @@ public class GameScreen extends Screen {
         }
 
         cannon.setShootingPos(shootingPosition);
-
-
         gameFrame = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/game_frame.png")));
         coinIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/coin.gif")));
         bgImage = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/main_menu/bg2.gif")));
@@ -258,7 +257,7 @@ public class GameScreen extends Screen {
         drawButton(g, clearGridUpgrade, UPGRADE_BUTTON_X[2], UPGRADE_BUTTON_Y, "clear-grid-upgrade", UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT, hoveredButton, HOVER_OPACITY);
 
         // Draw the shooting position
-        if(nextShootingPositionSet && !gameIsOver) {
+        if(!gameIsOver && !turnOngoing) {
             g.drawImage(ballImage.getImage(), shootingPosition.x - 15, shootingPosition.y - 15, 30, 30, null);
         }
 
@@ -276,6 +275,7 @@ public class GameScreen extends Screen {
         // Check if all balls are out of bounds
         if (balls.isEmpty()) {
             turnOngoing = false;
+
             if (!blocksMovedDown) {
                 moveBlocksDown(); // Move blocks down only once per turn
                 blocksMovedDown = true; // Set the flag
@@ -286,28 +286,12 @@ public class GameScreen extends Screen {
             blocksMovedDown = false; // Reset the flag at the start of each turn
         }
 
-        for (Ball ball : balls) {ball.update();
+        for (Ball ball : balls) {
+            ball.update();
 
             // Remove ball if it goes out of bounds
             if (ball.getY() > GAME_Y + GAME_HEIGHT - 40) {
                 balls.remove(ball);
-                // Mak e sure x coordinate is not right in the corner
-                int x = (int) ball.getX();
-//                if(x < GAME_X + 10)
-//                    x += GAME_X + 10;
-//                else if(x > GAME_X + GAME_WIDTH - 20)
-//                    x -= GAME_X + GAME_WIDTH - 20;
-
-                if(nextShootingPosition == null)
-                    nextShootingPosition = new Point(x, (int) shootingPosition.getY());
-
-                // Reset shooting position to the first ball's position
-                if(nextShootingPosition != null && !nextShootingPositionSet) {
-                    shootingPosition = nextShootingPosition;
-                    cannon.setShootingPos(shootingPosition);
-                    nextShootingPosition = null;
-                    nextShootingPositionSet = true;
-                }
                 break;
             }
 
@@ -365,7 +349,6 @@ public class GameScreen extends Screen {
 
     private void spawnBalls(double angle, double velocityMagnitude) {
         turnOngoing = true; // Prevent shooting while balls are being spawned
-        nextShootingPositionSet = false;
         int spacing = 5; // spacing between each ball
         new Timer((int) (150-cannon.getPower()*3), new ActionListener() {
             private int count = 0;
@@ -385,9 +368,8 @@ public class GameScreen extends Screen {
                     count++;
                 } else {
                     ((Timer)e.getSource()).stop();
-                    if (balls.isEmpty()) {
-                        turnOngoing = false; // Ensure turnOngoing is false only after all balls are processed
-                    }
+                    shootingPosition = new Point(new Random().nextInt(GAME_X+30, GAME_X+GAME_WIDTH-30), shootingPosition.y);
+                    cannon.setShootingPos(shootingPosition);
                 }
             }
         }).start();
@@ -508,7 +490,7 @@ public class GameScreen extends Screen {
         // Check if the mouse is inside the game area
         if (mouseX >= GAME_X && mouseX <= GAME_X + GAME_WIDTH && mouseY > GAME_Y && mouseY < GAME_Y + GAME_HEIGHT) {
             // Only allow shooting if there are no balls in play(meaning the turn is over)
-            if (balls.isEmpty()) {
+            if (balls.isEmpty() && !mousePressedOutsideGameArea) {
                 cannon.setMousePressed(true);
             }
 
@@ -521,6 +503,11 @@ public class GameScreen extends Screen {
             cannon.setMousePosOnPress(e.getPoint());
             cannon.setCurrentMousePos(e.getPoint());
         } else {
+            // Set the mouse as not pressed if the mouse is not in the game area
+            cannon.setMousePressed(false);
+            cannon.setCurrentMousePos(shootingPosition);
+            mousePressedOutsideGameArea = true;
+
             // Extra ball upgrade
             if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[0], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT)) {
                 if (numCoins >= 50) {
@@ -664,7 +651,7 @@ public class GameScreen extends Screen {
             return;
 
         // Check if the mouse is inside the game area
-        if (mouseX >= GAME_X && mouseX <= GAME_X + GAME_WIDTH && mouseY > GAME_Y && mouseY < GAME_Y + GAME_HEIGHT) {
+        if (mouseX >= GAME_X && mouseX <= GAME_X + GAME_WIDTH && mouseY > GAME_Y && mouseY < GAME_Y + GAME_HEIGHT && !mousePressedOutsideGameArea) {
             cannon.setMousePressed(false);
 
             // Prevent multiple shots in one turn
@@ -684,6 +671,8 @@ public class GameScreen extends Screen {
                 spawnBalls(cannon.getAngle(), cannon.getProducedVelocityMagnitude());
             }
         }
+
+        mousePressedOutsideGameArea = false; // Reset the flag
     }
 
     @Override
@@ -697,6 +686,10 @@ public class GameScreen extends Screen {
         // Check if the mouse is inside the game area
         if (mouseX >= GAME_X && mouseX <= GAME_X + GAME_WIDTH && mouseY > GAME_Y && mouseY < GAME_Y + GAME_HEIGHT) {
             cannon.setCurrentMousePos(e.getPoint());
+        } else {
+            // Set the mouse as not pressed if the mouse is not in the game area
+            cannon.setMousePressed(false);
+            cannon.setCurrentMousePos(shootingPosition);
         }
     }
 
@@ -732,6 +725,11 @@ public class GameScreen extends Screen {
                 hoverSoundClip.start();
             }
         }
-    }
 
+        if (mouseX < GAME_X || mouseX > GAME_X + GAME_WIDTH || mouseY < GAME_Y || mouseY > GAME_Y + GAME_HEIGHT) {
+            // Set the mouse as not pressed if the mouse is not in the game area
+            cannon.setMousePressed(false);
+            cannon.setCurrentMousePos(shootingPosition);
+        }
+    }
 }

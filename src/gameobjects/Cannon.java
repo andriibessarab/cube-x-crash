@@ -170,8 +170,8 @@ public class Cannon extends GameObject {
         angle = Math.atan2(deltaY, deltaX); // Angle in radians
 
         // Make sure angle is between 30 and 150 degrees
-        if (angle < Math.toRadians(30)) angle = Math.toRadians(30);
-        if (angle > Math.toRadians(150)) angle = Math.toRadians(150);
+        if (Math.abs(angle) < Math.toRadians(20)) angle = Math.toRadians(30);
+        if (Math.abs(angle) > Math.toRadians(160)) angle = Math.toRadians(150);
     }
 
 
@@ -186,7 +186,8 @@ public class Cannon extends GameObject {
         // Calculate the power based on the distance between the mouse press and release positions
         power = Math.sqrt(deltaX * deltaX + deltaY * deltaY) / POWER_SCALING_FACTOR; // Adjust the divisor for scaling power
 
-        if(power > 11) power = 15;
+        if(power > 15) power = 15;
+        if (power < 3) power = 0;
     }
 
     public double getAngle() {
