@@ -236,6 +236,7 @@ public class GameScreen extends Screen {
 
         // Check if all balls are out of bounds
         if (balls.isEmpty()) {
+            turnOngoing = false;
             // Reset shooting position to the last ball's position
             if(nextShootingPosition != null) {
                 shootingPosition = nextShootingPosition;
@@ -247,6 +248,7 @@ public class GameScreen extends Screen {
             }
             checkForGameOver();
         } else {
+            turnOngoing = true;
             blocksMovedDown = false; // Reset the flag at the start of each turn
         }
 
@@ -288,7 +290,6 @@ public class GameScreen extends Screen {
                             if(value instanceof ExtraBall) {
                                 ballCount++;
                                 if(soundOn) {
-                                    extraBallClip.stop();
                                     extraBallClip.setFramePosition(0);
                                     extraBallClip.start();
                                 }
@@ -298,7 +299,6 @@ public class GameScreen extends Screen {
                             }
                             else {
                                 if(soundOn) {
-                                    brickBreakClip.stop();
                                     brickBreakClip.setFramePosition(0);
                                     brickBreakClip.start();
                                 }
@@ -306,7 +306,6 @@ public class GameScreen extends Screen {
                             bricks[i][j] = null;
                         } else {
                             if(soundOn) {
-                                brickHitClip.stop();
                                 brickHitClip.setFramePosition(0);
                                 brickHitClip.start();
                             }
@@ -432,6 +431,9 @@ public class GameScreen extends Screen {
         int mouseX = e.getX();
         int mouseY = e.getY();
 
+        if(turnOngoing)
+            return;
+
         // Check if the mouse is inside the game area
         if (mouseX >= GAME_X && mouseX <= GAME_X + GAME_WIDTH && mouseY > GAME_Y && mouseY < GAME_Y + GAME_HEIGHT) {
             if (balls.isEmpty()) {
@@ -445,44 +447,70 @@ public class GameScreen extends Screen {
             cannon.setMousePosOnPress(e.getPoint());
             cannon.setCurrentMousePos(e.getPoint());
         } else {
-            for (int i = 0; i < UPGRADE_BUTTON_X.length; i++) {
-                if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[i], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT)) {
-                    switch (i) {
-                        case 0 -> {
-                            if (numCoins >= 50) {
-                                // Play button press sound effect
-                                if (soundOn) {
-                                    successPurchaseSoundClip.stop();
-                                    successPurchaseSoundClip.setFramePosition(0); // Rewind to the beginning
-                                    successPurchaseSoundClip.start();
-                                }
+            if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[0], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT)) {
+                if (numCoins >= 50) {
+                    // Play button press sound effect
+                    if (soundOn) {
+                        successPurchaseSoundClip.stop();
+                        successPurchaseSoundClip.setFramePosition(0); // Rewind to the beginning
+                        successPurchaseSoundClip.start();
+                    }
 
-                                // Deduct coins and add a ball
-                                numCoins -= 50;
-                                fileManager.saveCoins(numCoins);
-                                ballCount++;
-                                defaultNumberOfBalls++;
-                                fileManager.savePermanentBalls(fileManager.getPermanentBalls() + 1);
-                            } else {
-                                // Play error sound effect
-                                if (soundOn) {
-                                    errorPurchaseSoundClip.stop();
-                                    errorPurchaseSoundClip.setFramePosition(0); // Rewind to the beginning
-                                    errorPurchaseSoundClip.start();
-                                }
+                    // Deduct coins and add a ball
+                    numCoins -= 50;
+                    fileManager.saveCoins(numCoins);
+                    ballCount++;
+                    defaultNumberOfBalls++;
+                    fileManager.savePermanentBalls(fileManager.getPermanentBalls() + 1);
+                } else {
+                    // Play error sound effect
+                    if (soundOn) {
+                        errorPurchaseSoundClip.stop();
+                        errorPurchaseSoundClip.setFramePosition(0); // Rewind to the beginning
+                        errorPurchaseSoundClip.start();
+                    }
+
+                }
+            }
+
+            if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[1], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT)) {
+                if (numCoins >= 10) {
+                    boolean brickFound = false;
+                    for (int i = GAME_ROWS - 1; i >= 0; i--) {
+                        for (int j = 0; j < GAME_COLS; j++) {
+                            if (bricks[i][j] != null) {
+                                currScore += bricks[i][j].getHealth() * 10;
+                                highScore = Math.max(highScore, currScore);
+                                fileManager.saveHighScore(highScore);
+                                bricks[i][j] = null;
+                                brickFound = true;
                             }
                         }
-//                    case 1 -> {
-//                        if (numCoins >= 10) {
-//                            numCoins -= 10;
-//                            fileManager.saveCoins(numCoins);
-//                            for (int j = 0; j < GAME_COLS; j++) {
-//                                if (bricks[GAME_ROWS - 1][j] != null) {
-//                                    bricks[GAME_ROWS - 1][j] = null;
-//                                }
-//                            }
-//                        }
-//                    }
+                        // Fill the top row with new bricks
+                        if (i == 0)
+                            fillRow(0, likelihoodOfNewBrick);
+                        if (brickFound) {
+                            break; // Exit the loop if at least one brick is found
+                        }
+                    }
+                    if (brickFound) {
+                        // Play button press sound effect
+                        if (soundOn) {
+                            successPurchaseSoundClip.stop();
+                            successPurchaseSoundClip.setFramePosition(0); // Rewind to the beginning
+                            successPurchaseSoundClip.start();
+                        }
+                        numCoins -= 10; // Deduct coins only if a brick was found and removed
+                        fileManager.saveCoins(numCoins);
+                    }
+                } else {
+                    // Play error sound effect
+                    if (soundOn) {
+                        errorPurchaseSoundClip.stop();
+                        errorPurchaseSoundClip.setFramePosition(0); // Rewind to the beginning
+                        errorPurchaseSoundClip.start();
+                    }
+                }
 //                    case 2 -> {
 //                        if (numCoins >= 15) {
 //                            numCoins -= 15;
@@ -494,9 +522,6 @@ public class GameScreen extends Screen {
 //                            }
 //                        }
 //                    }
-                    }
-                }
-                break;
             }
         }
     }
@@ -536,9 +561,6 @@ public class GameScreen extends Screen {
 
         // Check if the mouse is inside the game area
         if (mouseX >= GAME_X && mouseX <= GAME_X + GAME_WIDTH && mouseY > GAME_Y && mouseY < GAME_Y + GAME_HEIGHT) {
-            if (balls.isEmpty()) {
-                turnOngoing = false;
-            }
             cannon.setCurrentMousePos(e.getPoint());
         }
     }
@@ -552,7 +574,7 @@ public class GameScreen extends Screen {
         String previousHoveredButton = hoveredButton;
         hoveredButton = "";
         for (int i = 0; i < UPGRADE_BUTTON_X.length; i++) {
-            if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[i], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT)) {
+            if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[i], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT) && !turnOngoing) {
                 switch (i) {
                     case 0 -> hoveredButton = "permanent-ball-upgrade";
                     case 1 -> hoveredButton = "break-row-upgrade";

@@ -33,4 +33,8 @@ public abstract class Brick extends GameObject {
     public void moveDown(int distance) {
         y += distance;
     }
+
+    public int getHealth() {
+        return brickHealth;
+    }
 }
