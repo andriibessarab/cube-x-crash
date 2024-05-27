@@ -33,6 +33,12 @@ public class GameScreen extends Screen {
     private int UPGRADE_BUTTON_HEIGHT = (int) (UPGRADE_BUTTON_WIDTH * 1.35); // Maintain aspect ratio
     private int[] UPGRADE_BUTTON_X = {540, 740, 940};
     private int UPGRADE_BUTTON_Y = 840;
+
+    private int QUIT_BUTTON_X = 53;
+    private int QUIT_BUTTON_Y = 7;
+    private int QUIT_BUTTON_WIDTH = 60;
+    private int QUIT_BUTTON_HEIGHT = 60;
+
     private final float HOVER_OPACITY = 0.5f; // 50% transparency
 
     private final int DEFAULT_LIKELIHOOD_OF_NEW_BRICK = 20, DEFAULT_AVG_HEALTH_FOR_BRICK = 8;
@@ -44,6 +50,7 @@ public class GameScreen extends Screen {
     private final BufferedImage permanentBallUpgradeImage;
     private final BufferedImage breakBottomRowUpgrade;
     private final BufferedImage clearGridUpgrade;
+    private final BufferedImage quitButton;
 
     private java.util.List<Ball> balls;
     private Brick[][] bricks;
@@ -66,6 +73,7 @@ public class GameScreen extends Screen {
     private final Clip hoverSoundClip;
     private final Clip successPurchaseSoundClip;
     private final Clip errorPurchaseSoundClip;
+    private final Clip buttonPressSoundClip;
     private int avgHealthForBrick = DEFAULT_AVG_HEALTH_FOR_BRICK;
     private String hoveredButton = ""; // The button being hovered over
     private boolean soundOn;
@@ -97,6 +105,7 @@ public class GameScreen extends Screen {
         permanentBallUpgradeImage = loadImage("/assets/game/permanent_ball_upgrade.png");
         breakBottomRowUpgrade = loadImage("/assets/game/break_bottom_row_upgrade.png");
         clearGridUpgrade = loadImage("/assets/game/clear_grid_upgrade.png");
+        quitButton = loadImage("/assets/game/quit_button.png");
 
         brickHitClip = loadSoundClip("/assets/sounds/brick_hit.wav");
         brickBreakClip = loadSoundClip("/assets/sounds/brick_break.wav");
@@ -104,6 +113,7 @@ public class GameScreen extends Screen {
         hoverSoundClip = loadSoundClip("/assets/sounds/button_hover.wav");
         successPurchaseSoundClip = loadSoundClip("/assets/sounds/successful_purchase.wav");
         errorPurchaseSoundClip = loadSoundClip("/assets/sounds/error_purchase.wav");
+        buttonPressSoundClip = loadSoundClip("/assets/sounds/button_press.wav");
     }
 
     @Override
@@ -199,6 +209,9 @@ public class GameScreen extends Screen {
                     value.draw(g);
             }
         }
+
+        // Draw the quit button
+        drawButton(g, quitButton, QUIT_BUTTON_X, QUIT_BUTTON_Y, "quit", QUIT_BUTTON_WIDTH, QUIT_BUTTON_HEIGHT, hoveredButton, HOVER_OPACITY);
 
         // Draw the score
         g.setColor(Color.WHITE);
@@ -516,17 +529,6 @@ public class GameScreen extends Screen {
                         errorPurchaseSoundClip.start();
                     }
                 }
-//                    case 2 -> {
-//                        if (numCoins >= 15) {
-//                            numCoins -= 15;
-//                            fileManager.saveCoins(numCoins);
-//                            for (int j = 0; j < GAME_COLS; j++) {
-//                                for (int i = 0; i < GAME_ROWS; i++) {
-//                                    bricks[i][j] = null;
-//                                }
-//                            }
-//                        }
-//                    }
             }
 
             // Clear the entire grid
@@ -574,6 +576,22 @@ public class GameScreen extends Screen {
                     fillRow(0, likelihoodOfNewBrick);
                     fillRow(1, likelihoodOfNewBrick);
                 }
+            }
+
+            if(isMouseOverButton(mouseX, mouseY, QUIT_BUTTON_X, QUIT_BUTTON_Y, QUIT_BUTTON_WIDTH, QUIT_BUTTON_HEIGHT)) {
+                if (fileManager.getHighScore() < currScore) {
+                    fileManager.saveHighScore(currScore);
+                }
+
+                reset();
+
+                if(soundOn) {
+                    buttonPressSoundClip.stop();
+                    buttonPressSoundClip.setFramePosition(0); // Rewind to the beginning
+                    buttonPressSoundClip.start();
+                }
+
+                screenChangeListener.changeScreen("main-menu");
             }
         }
     }
@@ -625,23 +643,30 @@ public class GameScreen extends Screen {
         // Check which button is being hovered over
         String previousHoveredButton = hoveredButton;
         hoveredButton = "";
-        for (int i = 0; i < UPGRADE_BUTTON_X.length; i++) {
-            if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[i], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT) && !turnOngoing) {
-                switch (i) {
-                    case 0 -> hoveredButton = "permanent-ball-upgrade";
-                    case 1 -> hoveredButton = "break-row-upgrade";
-                    case 2 -> hoveredButton = "clear-grid-upgrade";
-                }
-                // Only play the sound if the hovered button has changed
-                if (!hoveredButton.equals(previousHoveredButton)) {
-                    if (soundOn) {
-                        hoverSoundClip.stop();
-                        hoverSoundClip.setFramePosition(0); // Rewind to the beginning
-                        hoverSoundClip.start();
+        if(isMouseOverButton(mouseX, mouseY, QUIT_BUTTON_X, QUIT_BUTTON_Y, QUIT_BUTTON_WIDTH, QUIT_BUTTON_HEIGHT) && !turnOngoing) {
+            hoveredButton = "quit";
+        } else {
+            for (int i = 0; i < UPGRADE_BUTTON_X.length; i++) {
+                if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[i], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT) && !turnOngoing) {
+                    switch (i) {
+                        case 0 -> hoveredButton = "permanent-ball-upgrade";
+                        case 1 -> hoveredButton = "break-row-upgrade";
+                        case 2 -> hoveredButton = "clear-grid-upgrade";
                     }
+
+                    break; // Exit the loop after finding the hovered button
                 }
-                break; // Exit the loop after finding the hovered button
+            }
+        }
+
+        // Only play the sound if the hovered button has changed
+        if (!hoveredButton.equals(previousHoveredButton)) {
+            if (soundOn) {
+                hoverSoundClip.stop();
+                hoverSoundClip.setFramePosition(0); // Rewind to the beginning
+                hoverSoundClip.start();
             }
         }
     }
+
 }
