@@ -1,43 +1,40 @@
 package gameobjects.bricks;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class SquareBrick extends Brick {
     private boolean destroyed = false;
 
-    private static final Color FUTURISTIC_PURPLE = new Color(102, 0, 153);
-    private static final Color FUTURISTIC_BLUE = new Color(0, 0, 153);
+    private final BufferedImage brickImage;
 
     public SquareBrick(int x, int y, int width, int height, int health) {
         super(x, y, width, height, health);
+
+        brickImage = loadImage("/assets/game/square_brick.png");
     }
 
     @Override
     public void draw(Graphics g) {
-        // Calculate the color based on the brick's health
-        Color healthColor = blendColors(FUTURISTIC_BLUE, FUTURISTIC_PURPLE, getHealthRatio());
+        // Calculate the health ratio
+        float healthRatio = getHealthRatio();
 
-        g.setColor(healthColor);
+        // Blend the colors based on the health ratio
+        Color shadeColor = blendColors(FUTURISTIC_PURPLE, FUTURISTIC_BLUE, healthRatio, 80);
+
+        // Draw the brick image (optional, if you want the image to overlay the color)
+        g.drawImage(brickImage, x, y, width, height, null);
+
+        // Set the color for the graphics context
+        g.setColor(shadeColor);
+
+        // Fill the brick with the blended color
         g.fillRect(x, y, width, height);
 
-        // draw brick's health
-        g.setColor(Color.BLACK);
-        g.drawString(Integer.toString(brickHealth), x + width / 2, y + height / 2);
-
-        // draw brick's border
-        g.setColor(Color.BLACK);
-        g.drawRect(x, y, width, height);
-    }
-
-    private float getHealthRatio() {
-        return (float) brickHealth / maxHealth; // Assuming maxHealth is the maximum health of the brick
-    }
-
-    private Color blendColors(Color color1, Color color2, float ratio) {
-        int red = (int) (color1.getRed() * (1 - ratio) + color2.getRed() * ratio);
-        int green = (int) (color1.getGreen() * (1 - ratio) + color2.getGreen() * ratio);
-        int blue = (int) (color1.getBlue() * (1 - ratio) + color2.getBlue() * ratio);
-        return new Color(red, green, blue);
+        // Write the health of the brick on the brick
+        g.setColor(Color.WHITE);
+        g.setFont(customFont.deriveFont(20f));
+        g.drawString(Integer.toString(brickHealth), x+8, y+23);
     }
 
     @Override

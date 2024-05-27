@@ -94,7 +94,7 @@ public class GameScreen extends Screen {
             // Load the custom font from the file
             customFont = Font.createFont(Font.TRUETYPE_FONT, new File("src/assets/fonts/superchargelaser.otf"));
         } catch (IOException | FontFormatException e) {
-            // Handle exception
+            throw new RuntimeException("Error loading font file", e);
         }
 
 
@@ -176,7 +176,7 @@ public class GameScreen extends Screen {
                 continue;
 
             // Generate a health value around the average health
-            int health = avgHealthForBrick + (new Random().nextInt(3) - 1); // Randomly -1, 0, or +1 from avgHealthForBrick
+            int health = Math.min(99, avgHealthForBrick + (new Random().nextInt(3) - 1)) ; // Randomly -1, 0, or +1 from avgHealthForBrick. Limit to 100.
 
             double n = Math.random();
             if (n > .4)
