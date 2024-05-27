@@ -27,6 +27,9 @@ public class MainMenuScreen extends Screen {
     private final BufferedImage levelsButtonImage;
     private final BufferedImage infiniteModeButtonImage;
     private final BufferedImage shopButtonImage;
+    private final BufferedImage playButton;
+    private final BufferedImage settingsButton;
+    private final BufferedImage quitButton;
 
     // Sounds
     private final Clip backgroundMusicClip;
@@ -56,6 +59,9 @@ public class MainMenuScreen extends Screen {
         levelsButtonImage = loadImage("/assets/main_menu/button_levels.png");
         infiniteModeButtonImage = loadImage("/assets/main_menu/button_infinite_mode.png");
         shopButtonImage = loadImage("/assets/main_menu/button_shop.png");
+        playButton = loadImage("/assets/main_menu/play_button.png");
+        settingsButton = loadImage("/assets/main_menu/settings_button.png");
+        quitButton = loadImage("/assets/main_menu/quit_button.png");
 
         // Load sounds
         backgroundMusicClip = loadSoundClip("/assets/sounds/lobby_track.wav");
@@ -96,9 +102,9 @@ public class MainMenuScreen extends Screen {
         g.drawImage(titleImage, 0, 0, this);
 
         // Draw buttons using the stored Y positions from the BUTTON_Y array
-        drawButton(g, levelsButtonImage, BUTTON_X, BUTTON_Y[0], "levels");
-        drawButton(g, infiniteModeButtonImage, BUTTON_X, BUTTON_Y[1], "infinite");
-        drawButton(g, shopButtonImage, BUTTON_X, BUTTON_Y[2], "shop");
+        drawButton(g, playButton, BUTTON_X, BUTTON_Y[0], "play");
+        drawButton(g, settingsButton, BUTTON_X, BUTTON_Y[1], "settings");
+        drawButton(g, quitButton, BUTTON_X, BUTTON_Y[2], "quit");
     }
 
 
@@ -130,17 +136,9 @@ public class MainMenuScreen extends Screen {
         int mouseX = e.getX();
         int mouseY = e.getY();
 
-        // Check if Levels button is clicked
+        // Check if Play button is clicked
         if (mouseX >= BUTTON_X && mouseX <= (BUTTON_X + BUTTON_WIDTH) &&
                 mouseY >= BUTTON_Y[0] && mouseY <= (BUTTON_Y[0] + BUTTON_HEIGHT)) {
-            // Play button press sound effect
-            buttonPressSoundClip.setFramePosition(0); // Rewind to the beginning
-            buttonPressSoundClip.start();
-        }
-
-        // Check if Infinite Mode button is clicked
-        if (mouseX >= BUTTON_X && mouseX <= (BUTTON_X + BUTTON_WIDTH) &&
-                mouseY >= BUTTON_Y[1] && mouseY <= (BUTTON_Y[1] + BUTTON_HEIGHT)) {
             // Play button press sound effect
             buttonPressSoundClip.setFramePosition(0); // Rewind to the beginning
             buttonPressSoundClip.start();
@@ -148,12 +146,24 @@ public class MainMenuScreen extends Screen {
             screenChangeListener.changeScreen("game");
         }
 
-        // Check if Shop button is clicked
+        // Check if Settings button is clicked
+        if (mouseX >= BUTTON_X && mouseX <= (BUTTON_X + BUTTON_WIDTH) &&
+                mouseY >= BUTTON_Y[1] && mouseY <= (BUTTON_Y[1] + BUTTON_HEIGHT)) {
+            // Play button press sound effect
+            buttonPressSoundClip.setFramePosition(0); // Rewind to the beginning
+            buttonPressSoundClip.start();
+
+            screenChangeListener.changeScreen("settings");
+        }
+
+        // Check if Quit button is clicked
         if (mouseX >= BUTTON_X && mouseX <= (BUTTON_X + BUTTON_WIDTH) &&
                 mouseY >= BUTTON_Y[2] && mouseY <= (BUTTON_Y[2] + BUTTON_HEIGHT)) {
             // Play button press sound effect
             buttonPressSoundClip.setFramePosition(0); // Rewind to the beginning
             buttonPressSoundClip.start();
+
+            System.exit(0);
         }
     }
 
@@ -168,9 +178,9 @@ public class MainMenuScreen extends Screen {
         for (int i = 0; i < BUTTON_Y.length; i++) {
             if (isMouseOverButton(mouseX, mouseY, BUTTON_X, BUTTON_Y[i])) {
                 switch (i) {
-                    case 0 -> hoveredButton = "levels";
-                    case 1 -> hoveredButton = "infinite";
-                    case 2 -> hoveredButton = "shop";
+                    case 0 -> hoveredButton = "play";
+                    case 1 -> hoveredButton = "settings";
+                    case 2 -> hoveredButton = "quit";
                 }
                 // Only play the sound if the hovered button has changed
                 if (!hoveredButton.equals(previousHoveredButton)) {

@@ -3,10 +3,7 @@ package screens;
 import file_manager.FileManager;
 import gameobjects.Ball;
 import gameobjects.Cannon;
-import gameobjects.bricks.Brick;
-import gameobjects.bricks.ExtraBall;
-import gameobjects.bricks.SquareBrick;
-import gameobjects.bricks.TriangleBrick;
+import gameobjects.bricks.*;
 
 import javax.sound.sampled.Clip;
 import javax.swing.*;
@@ -130,7 +127,7 @@ public class GameScreen extends Screen {
     // FIll a row with bricks
     private void fillRow(int row, int probability) {
         int filledColumns = 0;
-        // Increment the average health every few rows randomly between 1 to 3 rows
+        // Increment the average health every few rows randomly between 1 and 3 rows
         if (row % (new Random().nextInt(3) + 1) == 0) {
             avgHealthForBrick += 1; // Adjust this value to control the rate of difficulty increase
         }
@@ -150,9 +147,10 @@ public class GameScreen extends Screen {
                 bricks[row][j] = new SquareBrick(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, health);
             else if (n > .08)
                 bricks[row][j] = new TriangleBrick(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, health);
+            else if (n > .03)
+                bricks[row][j] = new ExtraBall(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, 1);
             else
-                bricks[row][j] = new ExtraBall(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, 1); // ExtraBall health remains constant
-
+                bricks[row][j] = new Coin(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, 1);
             filledColumns++;
         }
     }
@@ -243,8 +241,13 @@ public class GameScreen extends Screen {
                     if (value != null && ball.isCollidingWith(value) && !value.isDestroyed()) {
                         value.hit(1);
 
-
+                        // Update score
                         currScore += 10;
+
+                        // Update high score
+                        if (currScore > highScore) {
+                            highScore = currScore;
+                        }
 
                         if (value.isDestroyed()) {
                             // If of class ExtraBall, add a ball
@@ -307,7 +310,7 @@ public class GameScreen extends Screen {
         // if any bricks in last row go back to main menu
         for (int j = 0; j < GAME_COLS; j++) {
             if (bricks[GAME_ROWS - 1][j] != null) {
-                if (highScore < currScore) {
+                if (fileManager.getHighScore() < currScore) {
                     fileManager.saveHighScore(currScore);
                 }
 
