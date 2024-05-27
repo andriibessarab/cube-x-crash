@@ -35,33 +35,96 @@ public class Ball extends GameObject {
         y += speedY;
 
         // Collision detection with the borders
-        if (x <= GameScreen.GAME_X || x >= GameScreen.GAME_X + GameScreen.GAME_WIDTH - width) {
+        if (x <= GameScreen.GAME_X + 5 || x >= GameScreen.GAME_X + GameScreen.GAME_WIDTH - width - 5) {
             speedX = -speedX; // Reverse direction on X-axis
             x += speedX;
         }
-        if (y <= GameScreen.GAME_Y || y >= GameScreen.GAME_Y + GameScreen.GAME_HEIGHT - height) {
+        if (y <= GameScreen.GAME_Y + 5) {
             speedY = -speedY; // Reverse direction on Y-axis
             y += speedY;
         }
 
         // Never let y or x speed be 0 to avoid getting stuck
-        if (speedX == 0) {
-            speedX = 1;
-        }
-        if (speedY == 0) {
-            speedY = 1;
-        }
+//        if (speedX == 0) {
+//            speedX = 1;
+//        }
+//        if (speedY == 0) {
+//            speedY = 1;
+//        }
     }
 
     public boolean isCollidingWith(Brick o) {
         if (o instanceof TriangleBrick) {
             return isCollidingWithTriangle((TriangleBrick) o);
         }
-        return x < o.getX() + o.getWidth() &&
-                x + width > o.getX() &&
-                y < o.getY() + o.getHeight() &&
-                y + height > o.getY();
+
+        // Check if the ball is colliding with the brick ensure the ball doesn tget stuck
+        if(x + width >= o.getX() && x <= o.getX() + o.getWidth() && y + height >= o.getY() && y <= o.getY() + o.getHeight()) {
+            return true;
+        }
+
+        return false;
     }
+
+    public void bounceOff(Brick o) {
+        // Calculate the center coordinates of the ball
+        double ballCenterX = x + width / 2;
+        double ballCenterY = y + height / 2;
+
+        // Calculate the center coordinates of the brick
+        double brickCenterX = o.getX() + o.getWidth() / 2;
+        double brickCenterY = o.getY() + o.getHeight() / 2;
+
+        // Calculate the half-width and half-height of the brick
+        double brickHalfWidth = o.getWidth() / 2;
+        double brickHalfHeight = o.getHeight() / 2;
+
+        // Calculate the distance between the centers of the ball and the brick
+        double dx = ballCenterX - brickCenterX;
+        double dy = ballCenterY - brickCenterY;
+
+        // Check for collision with the top or bottom of the brick
+        if (Math.abs(dx) < brickHalfWidth + width / 2 && Math.abs(dy) < brickHalfHeight + height / 2) {
+            // Collision detected
+            if (Math.abs(dy) > Math.abs(dx)) {
+                // Vertical collision
+                speedY = -speedY; // Reverse direction on Y-axis
+                y += speedY;
+            } else {
+                // Horizontal collision
+                speedX = -speedX; // Reverse direction on X-axis
+                x += speedX;
+            }
+        } else {
+            // Corner collisions
+            if (dx > 0) {
+                if (dy > 0) {
+                    // Ball hits bottom-right corner
+                    // Adjust speed in both X and Y directions
+                    speedX = -speedX;
+                    speedY = -speedY;
+                } else {
+                    // Ball hits top-right corner
+                    // Adjust speed in both X and Y directions
+                    speedX = -speedX;
+                    speedY = -speedY;
+                }
+            } else {
+                if (dy > 0) {
+                    // Ball hits bottom-left corner
+                    // Adjust speed in both X and Y directions
+                    speedX = -speedX;
+                    speedY = -speedY;
+                } else {
+                    // Ball hits top-left corner
+                    // Adjust speed in both X and Y directions
+                    speedX = -speedX;
+                    speedY = -speedY;
+                }
+            }
+        }
+    }
+
 
     public boolean isCollidingWithTriangle(TriangleBrick triangle) {
         // Define the vertices of the triangle (assuming the right angle is at the top right)
@@ -116,10 +179,6 @@ public class Ball extends GameObject {
 
     private int sign(Point p1, Point p2, Point p3) {
         return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
-    }
-
-    public void bounceOff() {
-        speedY = -speedY;
     }
 
 //    public void bounceOff(Ball o) {

@@ -14,8 +14,8 @@ public abstract class Brick extends GameObject {
     protected int brickHealth;
     protected boolean isDestroyed = false;
     protected Font customFont;
-    protected static final Color FUTURISTIC_PURPLE = new Color(153, 0, 46);
-    protected static final Color FUTURISTIC_BLUE = new Color(0, 0, 153);
+    public static final Color FUTURISTIC_PURPLE = new Color(153, 0, 46);
+    public static final Color FUTURISTIC_BLUE = new Color(0, 0, 153);
 
     public Brick(int x, int y, int width, int height, int health) {
         super(x, y, width, height);
@@ -44,14 +44,6 @@ public abstract class Brick extends GameObject {
         brickHealth -= damage;
         if (brickHealth <= 0) {
             isDestroyed = true;
-        }
-    }
-
-    protected BufferedImage loadImage(String url) {
-        try {
-            return ImageIO.read(Objects.requireNonNull(getClass().getResource(url)));
-        } catch (IOException e) {
-            throw new RuntimeException("Error loading image: " + url, e);
         }
     }
 

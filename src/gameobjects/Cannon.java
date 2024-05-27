@@ -1,7 +1,10 @@
 package gameobjects;
 
+import gameobjects.bricks.Brick;
+
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 
 public class Cannon extends GameObject {
     // Define the default width and height of the cannon
@@ -25,11 +28,14 @@ public class Cannon extends GameObject {
     private Point currentMousePos;
     private Point mousePosOnPress;
     private Point mousePosOnRelease;
+    private Point shootingPos;
 
     private boolean isMousePressed = false;
 
+    private BufferedImage arrow;
+
     // Constructor for the Cannon of default width and height
-    public Cannon(int x, int y, Point currentMousePos) {
+    public Cannon(int x, int y, Point currentMousePos, Point shootingPos) {
         // Call the parent constructor
         super(x, y, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
@@ -37,6 +43,7 @@ public class Cannon extends GameObject {
         this.currentMousePos = currentMousePos;
         this.mousePosOnPress = currentMousePos;
         this.mousePosOnRelease = currentMousePos;
+        this.shootingPos = shootingPos;
 
         // Initialize the angle and power
         calculateAngle();
@@ -56,7 +63,6 @@ public class Cannon extends GameObject {
         calculateAngle();
     }
 
-
     @Override
     public void update() {
         // Update the angle and power of the cannon
@@ -66,70 +72,18 @@ public class Cannon extends GameObject {
     // Draw the cannon
     @Override
     public void draw(Graphics g) {
-
         // Cast Graphics to Graphics2D for more advanced operations
         Graphics2D g2d = (Graphics2D) g;
-
-//        int barrelRelativeWidth = (int)(width * 0.85); // The width of the barrel relative to the width of the base
-//        int barrelRelativeHeight = (int)(height * 0.9); // The height of the barrel relative to the height of the base
-//
-//        int barrelRelativeYPos = y - (int)(height * 0.75); // The height of the barrel relative to the height of the cannon
-//        int barrelRelativeXPos = x + (width - barrelRelativeWidth) / 2; // The x position of the barrel relative to the width of the cannon
-//
-//        calculateAngle();
-//
-//        int startAngleDegrees = (int) Math.toDegrees(this.angle);
-//
-//        // Draw the base of the cannon
-//        g.setColor(BASE_COLOR);
-//        g.fillArc(x, y, width, height, 0, 180);
-//
-//        // Draw the border of the base of the cannon
-//        g.setColor(BORDER_COLOR);
-//        g.drawArc(x, y, width, height, 0, 180);
-//
-//        // Draw the barrel of the cannon
-//        g.setColor(BARREL_COLOR);
-//        g.fillArc(barrelRelativeXPos, barrelRelativeYPos, barrelRelativeWidth, barrelRelativeHeight, startAngleDegrees, 180);
-//
-//        // Draw the border of the barrel of the cannon
-//        g.setColor(BORDER_COLOR);
-//        g.drawArc(barrelRelativeXPos, barrelRelativeYPos, barrelRelativeWidth, barrelRelativeHeight, startAngleDegrees, 180);
 
         if(isMousePressed) {
             calculateAngle();
             calculatePower();
 
-
-            // Set the stroke for the dashed line
-            float[] dashPattern = { 10, 10 };
-            g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, dashPattern, 0));
-
-            // Calculate the end point of the dashed line using the angle and a large enough magnitude
-            int lineLength = 1000; // Adjust as necessary
-            int endX = (int) (x + width / 2 + lineLength * Math.cos(angle - Math.PI / 2));
-            int endY = (int) (y + height / 2 + lineLength * Math.sin(angle - Math.PI / 2));
-
-            // Draw the dashed line from the cannon to the predicted collision point on the wall
-            g2d.setColor(Color.GRAY);
-            g2d.drawLine(x + width / 2, y + height / 2, endX, -endY);
-
-            // Set the stroke for the arrow
-            g2d.setStroke(new BasicStroke(2));
-
-            // Draw an arrow from the mouse press point to the current mouse position
-            g2d.setColor(Color.RED);
-            drawArrow(g2d, mousePosOnPress.x, mousePosOnPress.y, currentMousePos.x, currentMousePos.y);
-
-            // draw a bug dot on both the mouse press and current mouse position
-            g.setColor(Color.RED);
-
-            g.fillOval(mousePosOnPress.x - 5, mousePosOnPress.y - 5, 10, 10);
-            g.fillOval(currentMousePos.x - 5, currentMousePos.y - 5, 10, 10);
-
+            // draw arrow between press down position and current mouse position
+            g2d.setColor(Brick.FUTURISTIC_BLUE);
+            if (shootingPos != null && currentMousePos != null)
+                drawArrow(g2d, shootingPos.x, shootingPos.y, currentMousePos.x, currentMousePos.y);
         }
-
-
 
         // Draw the debug information
         if (super.debug) {
@@ -148,8 +102,19 @@ public class Cannon extends GameObject {
 
         // Draw horizontal arrow starting in (0, 0)
         g2d.drawLine(0, 0, len, 0);
-        g2d.fillPolygon(new int[] {len, len - 20, len - 20, len},
-                new int[] {0, -20, 20, 0}, 4);
+
+        // Create a gradient from blue to purple
+        Color startColor = new Color(0, 0, 255); // Blue
+        Color endColor = new Color(128, 0, 128); // Purple
+        GradientPaint gp = new GradientPaint(len, -20, startColor, len, 20, endColor, true);
+        g2d.setPaint(gp);
+
+        // Increase the arrow leg width by changing the second and third points
+        g2d.fillPolygon(new int[] {len, len - 30, len - 30, len},
+                new int[] {0, -30, 30, 0}, 4);
+
+        // Reset the transform
+        g2d.setTransform(new AffineTransform());
     }
 
     // Draw the debug information
@@ -197,30 +162,31 @@ public class Cannon extends GameObject {
 
     // Calculate the angle of the cannon
     private void calculateAngle() {
-        if(currentMousePos == null) return;
+        if (currentMousePos == null || shootingPos == null) return;
 
-        // Calculate  delta x and delta y
-        double deltaX = currentMousePos.x - x - (double) width /2;
-        double deltaY = currentMousePos.y - y - (double) height /2;
+        double deltaX = currentMousePos.x - shootingPos.x;
+        double deltaY = -(currentMousePos.y - shootingPos.y);
 
-        // Calculate the angle based on the current mouse position
-        angle = Math.abs(Math.atan2(deltaY, deltaX)) + + Math.PI/2;
+        angle = Math.atan2(deltaY, deltaX); // Angle in radians
 
-        angle = Math.toRadians(Math.max(140, Math.min(220,  (int) Math.toDegrees(angle)))); // The rot angle of the barrel
+        // Make sure angle is between 30 and 150 degrees
+        if (angle < Math.toRadians(30)) angle = Math.toRadians(30);
+        if (angle > Math.toRadians(150)) angle = Math.toRadians(150);
     }
+
 
     // Calculate the power of the cannon
     private void calculatePower() {
         if (mousePosOnPress == null || mousePosOnRelease == null) return;
 
         // Calculate  delta x and delta y
-        double deltaX = mousePosOnRelease.x - mousePosOnPress.x;
-        double deltaY = mousePosOnRelease.y - mousePosOnPress.y;
+        double deltaX = currentMousePos.x - shootingPos.x;
+        double deltaY = -(currentMousePos.y - shootingPos.y);
 
         // Calculate the power based on the distance between the mouse press and release positions
         power = Math.sqrt(deltaX * deltaX + deltaY * deltaY) / POWER_SCALING_FACTOR; // Adjust the divisor for scaling power
-        if (power > 5) power = 5;
-        if (power < 1.5) power = 0;
+
+        if(power > 11) power = 15;
     }
 
     public double getAngle() {
@@ -245,5 +211,14 @@ public class Cannon extends GameObject {
 
     public void setMousePressed(boolean state) {
         isMousePressed = state;
+    }
+
+    public void setShootingPos(Point p) {
+        shootingPos = p;
+    }
+
+    public double getPower() {
+        calculatePower();
+        return power;
     }
 }

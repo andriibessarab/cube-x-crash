@@ -1,6 +1,10 @@
 package gameobjects;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Objects;
 
 public abstract class GameObject {
     protected int x, y; // Position
@@ -15,6 +19,14 @@ public abstract class GameObject {
         this.height = height;
         this.isVisible = true;
         this.debug = false;
+    }
+
+    protected BufferedImage loadImage(String url) {
+        try {
+            return ImageIO.read(Objects.requireNonNull(getClass().getResource(url)));
+        } catch (IOException e) {
+            throw new RuntimeException("Error loading image: " + url, e);
+        }
     }
 
     public abstract void update(); // Update the object's state

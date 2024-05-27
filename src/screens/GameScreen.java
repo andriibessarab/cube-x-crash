@@ -79,6 +79,7 @@ public class GameScreen extends Screen {
     private String hoveredButton = ""; // The button being hovered over
     private boolean soundOn;
     private int defaultNumberOfBalls; // Number of balls to start with
+    private boolean nextShootingPositionSet = true;
 
 
     public GameScreen(int width, int height, ScreenChangeListener listener) {
@@ -97,6 +98,8 @@ public class GameScreen extends Screen {
         } catch (IOException | FontFormatException e) {
             throw new RuntimeException("Error loading font file", e);
         }
+
+        cannon.setShootingPos(shootingPosition);
 
 
         gameFrame = new ImageIcon(Objects.requireNonNull(getClass().getResource("/assets/game/game_frame.png")));
@@ -131,7 +134,7 @@ public class GameScreen extends Screen {
         balls = new java.util.ArrayList<>();
         bricks = new Brick[GAME_ROWS][GAME_COLS];
 
-        cannon = new Cannon(PANEL_WIDTH / 2 - Cannon.DEFAULT_WIDTH, PANEL_HEIGHT-40, new Point(PANEL_WIDTH / 2 - Cannon.DEFAULT_WIDTH/2, 0));
+        cannon = new Cannon(PANEL_WIDTH / 2 - Cannon.DEFAULT_WIDTH, PANEL_HEIGHT-40, new Point(PANEL_WIDTH / 2 - Cannon.DEFAULT_WIDTH/2, 0), shootingPosition);
 
         // Load the sound setting from the file
         soundOn = fileManager.isSoundEnabled();
@@ -161,6 +164,9 @@ public class GameScreen extends Screen {
         ballCount = defaultNumberOfBalls;
         likelihoodOfNewBrick = DEFAULT_LIKELIHOOD_OF_NEW_BRICK;
         avgHealthForBrick = DEFAULT_AVG_HEALTH_FOR_BRICK;
+
+        shootingPosition = new Point(PANEL_WIDTH / 2, shootingPosition.y);
+        cannon.setShootingPos(shootingPosition);
     }
 
     // FIll a row with bricks
@@ -251,6 +257,11 @@ public class GameScreen extends Screen {
         drawButton(g, breakBottomRowUpgrade, UPGRADE_BUTTON_X[1], UPGRADE_BUTTON_Y, "break-row-upgrade", UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT, hoveredButton, HOVER_OPACITY);
         drawButton(g, clearGridUpgrade, UPGRADE_BUTTON_X[2], UPGRADE_BUTTON_Y, "clear-grid-upgrade", UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT, hoveredButton, HOVER_OPACITY);
 
+        // Draw the shooting position
+        if(nextShootingPositionSet && !gameIsOver) {
+            g.drawImage(ballImage.getImage(), shootingPosition.x - 15, shootingPosition.y - 15, 30, 30, null);
+        }
+
         cannon.draw(g);
     }
 
@@ -265,11 +276,6 @@ public class GameScreen extends Screen {
         // Check if all balls are out of bounds
         if (balls.isEmpty()) {
             turnOngoing = false;
-            // Reset shooting position to the last ball's position
-            if(nextShootingPosition != null) {
-                shootingPosition = nextShootingPosition;
-                nextShootingPosition = null;
-            }
             if (!blocksMovedDown) {
                 moveBlocksDown(); // Move blocks down only once per turn
                 blocksMovedDown = true; // Set the flag
@@ -283,18 +289,25 @@ public class GameScreen extends Screen {
         for (Ball ball : balls) {ball.update();
 
             // Remove ball if it goes out of bounds
-
             if (ball.getY() > GAME_Y + GAME_HEIGHT - 40) {
                 balls.remove(ball);
                 // Mak e sure x coordinate is not right in the corner
                 int x = (int) ball.getX();
-                if(x < GAME_X + 10)
-                    x += GAME_X + 10;
-                else if(x > GAME_X + GAME_WIDTH - 20)
-                    x -= GAME_X + GAME_WIDTH - 20;
+//                if(x < GAME_X + 10)
+//                    x += GAME_X + 10;
+//                else if(x > GAME_X + GAME_WIDTH - 20)
+//                    x -= GAME_X + GAME_WIDTH - 20;
 
                 if(nextShootingPosition == null)
                     nextShootingPosition = new Point(x, (int) shootingPosition.getY());
+
+                // Reset shooting position to the first ball's position
+                if(nextShootingPosition != null && !nextShootingPositionSet) {
+                    shootingPosition = nextShootingPosition;
+                    cannon.setShootingPos(shootingPosition);
+                    nextShootingPosition = null;
+                    nextShootingPositionSet = true;
+                }
                 break;
             }
 
@@ -338,7 +351,7 @@ public class GameScreen extends Screen {
                                 brickHitClip.start();
                             }
 
-                            ball.bounceOff();
+                            ball.bounceOff(value);
                         }
                     }
                 }
@@ -352,8 +365,9 @@ public class GameScreen extends Screen {
 
     private void spawnBalls(double angle, double velocityMagnitude) {
         turnOngoing = true; // Prevent shooting while balls are being spawned
+        nextShootingPositionSet = false;
         int spacing = 5; // spacing between each ball
-        new Timer(60, new ActionListener() {
+        new Timer((int) (150-cannon.getPower()*3), new ActionListener() {
             private int count = 0;
 
             @Override
@@ -363,8 +377,8 @@ public class GameScreen extends Screen {
                 cannon.setY(shootingPosition.y);
 
                 if (count < ballCount) {
-                    int velocityX = (int) (velocityMagnitude * Math.cos(angle - Math.PI / 2)) * 3;
-                    int velocityY = -(int) (velocityMagnitude * Math.sin(angle - Math.PI / 2)) * 3;
+                    int velocityX = (int) (velocityMagnitude * Math.cos(angle));
+                    int velocityY = -(int) (velocityMagnitude * Math.sin(angle));
 
                     Ball newBall = new Ball(shootingPosition.x + count * spacing, shootingPosition.y, 30, velocityX, velocityY, Color.RED, PANEL_WIDTH, PANEL_HEIGHT);
                     balls.add(newBall);
