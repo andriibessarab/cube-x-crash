@@ -51,6 +51,15 @@ public class FileManager {
         return Boolean.parseBoolean(properties.getProperty("soundEnabled", "true"));
     }
 
+    public void savePermanentBalls(int permanentBalls) {
+        properties.setProperty("permanentBalls", String.valueOf(permanentBalls));
+        saveProperties();
+    }
+
+    public int getPermanentBalls() {
+        return Integer.parseInt(properties.getProperty("permanentBalls", "10"));
+    }
+
     private void saveProperties() {
         try {
             properties.store(new FileOutputStream(propertiesPath), null);

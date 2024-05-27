@@ -35,7 +35,7 @@ public class GameScreen extends Screen {
     private int UPGRADE_BUTTON_Y = 840;
     private final float HOVER_OPACITY = 0.5f; // 50% transparency
 
-    private final int DEFAULT_NUM_BALLS = 10, DEFAULT_LIKELIHOOD_OF_NEW_BRICK = 20, DEFAULT_AVG_HEALTH_FOR_BRICK = 8;
+    private final int DEFAULT_LIKELIHOOD_OF_NEW_BRICK = 20, DEFAULT_AVG_HEALTH_FOR_BRICK = 8;
 
     private final ImageIcon gameFrame;
     private final ImageIcon coinIcon;
@@ -56,13 +56,19 @@ public class GameScreen extends Screen {
     private boolean isPaused = false;
     private Font customFont;
     private FileManager fileManager;
-    private int currScore = 0, ballCount = DEFAULT_NUM_BALLS;
+    private int currScore = 0, ballCount;
     private boolean gameIsOver = false;
     private int numCoins, highScore;
-    private final Clip brickHitClip, brickBreakClip, extraBallClip, hoverSoundClip;
+    private final Clip brickHitClip;
+    private final Clip brickBreakClip;
+    private final Clip extraBallClip;
+    private final Clip hoverSoundClip;
+    private final Clip successPurchaseSoundClip;
+    private final Clip errorPurchaseSoundClip;
     private int avgHealthForBrick = DEFAULT_AVG_HEALTH_FOR_BRICK;
     private String hoveredButton = ""; // The button being hovered over
     private boolean soundOn;
+    private int defaultNumberOfBalls; // Number of balls to start with
 
 
     public GameScreen(int width, int height, ScreenChangeListener listener) {
@@ -94,6 +100,8 @@ public class GameScreen extends Screen {
         brickBreakClip = loadSoundClip("/assets/sounds/brick_break.wav");
         extraBallClip = loadSoundClip("/assets/sounds/extra_ball.wav");
         hoverSoundClip = loadSoundClip("/assets/sounds/button_hover.wav");
+        successPurchaseSoundClip = loadSoundClip("/assets/sounds/successful_purchase.wav");
+        errorPurchaseSoundClip = loadSoundClip("/assets/sounds/error_purchase.wav");
     }
 
     @Override
@@ -102,6 +110,8 @@ public class GameScreen extends Screen {
 
         numCoins = fileManager.getCoins();
         highScore = fileManager.getHighScore();
+        defaultNumberOfBalls = fileManager.getPermanentBalls();
+        ballCount = defaultNumberOfBalls;
 
 
         balls = new java.util.ArrayList<>();
@@ -133,7 +143,7 @@ public class GameScreen extends Screen {
 
         highScore = fileManager.getHighScore();
         currScore = 0;
-        ballCount = DEFAULT_NUM_BALLS;
+        ballCount = defaultNumberOfBalls;
         likelihoodOfNewBrick = DEFAULT_LIKELIHOOD_OF_NEW_BRICK;
         avgHealthForBrick = DEFAULT_AVG_HEALTH_FOR_BRICK;
     }
@@ -278,6 +288,7 @@ public class GameScreen extends Screen {
                             if(value instanceof ExtraBall) {
                                 ballCount++;
                                 if(soundOn) {
+                                    extraBallClip.stop();
                                     extraBallClip.setFramePosition(0);
                                     extraBallClip.start();
                                 }
@@ -287,6 +298,7 @@ public class GameScreen extends Screen {
                             }
                             else {
                                 if(soundOn) {
+                                    brickBreakClip.stop();
                                     brickBreakClip.setFramePosition(0);
                                     brickBreakClip.start();
                                 }
@@ -294,6 +306,7 @@ public class GameScreen extends Screen {
                             bricks[i][j] = null;
                         } else {
                             if(soundOn) {
+                                brickHitClip.stop();
                                 brickHitClip.setFramePosition(0);
                                 brickHitClip.start();
                             }
@@ -374,7 +387,6 @@ public class GameScreen extends Screen {
     public void togglePause() {
         isPaused = true;
         setOverlay();
-
     }
 
     private void setOverlay() {
@@ -417,46 +429,118 @@ public class GameScreen extends Screen {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (balls.isEmpty()) {
-            cannon.setMousePressed(true);
-        }
+        int mouseX = e.getX();
+        int mouseY = e.getY();
 
-        // Prevent multiple shots in one turn
-        if (turnOngoing) {
-            return;
+        // Check if the mouse is inside the game area
+        if (mouseX >= GAME_X && mouseX <= GAME_X + GAME_WIDTH && mouseY > GAME_Y && mouseY < GAME_Y + GAME_HEIGHT) {
+            if (balls.isEmpty()) {
+                cannon.setMousePressed(true);
+            }
+
+            // Prevent multiple shots in one turn
+            if (turnOngoing) {
+                return;
+            }
+            cannon.setMousePosOnPress(e.getPoint());
+            cannon.setCurrentMousePos(e.getPoint());
+        } else {
+            for (int i = 0; i < UPGRADE_BUTTON_X.length; i++) {
+                if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[i], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT)) {
+                    switch (i) {
+                        case 0 -> {
+                            if (numCoins >= 50) {
+                                // Play button press sound effect
+                                if (soundOn) {
+                                    successPurchaseSoundClip.stop();
+                                    successPurchaseSoundClip.setFramePosition(0); // Rewind to the beginning
+                                    successPurchaseSoundClip.start();
+                                }
+
+                                // Deduct coins and add a ball
+                                numCoins -= 50;
+                                fileManager.saveCoins(numCoins);
+                                ballCount++;
+                                defaultNumberOfBalls++;
+                                fileManager.savePermanentBalls(fileManager.getPermanentBalls() + 1);
+                            } else {
+                                // Play error sound effect
+                                if (soundOn) {
+                                    errorPurchaseSoundClip.stop();
+                                    errorPurchaseSoundClip.setFramePosition(0); // Rewind to the beginning
+                                    errorPurchaseSoundClip.start();
+                                }
+                            }
+                        }
+//                    case 1 -> {
+//                        if (numCoins >= 10) {
+//                            numCoins -= 10;
+//                            fileManager.saveCoins(numCoins);
+//                            for (int j = 0; j < GAME_COLS; j++) {
+//                                if (bricks[GAME_ROWS - 1][j] != null) {
+//                                    bricks[GAME_ROWS - 1][j] = null;
+//                                }
+//                            }
+//                        }
+//                    }
+//                    case 2 -> {
+//                        if (numCoins >= 15) {
+//                            numCoins -= 15;
+//                            fileManager.saveCoins(numCoins);
+//                            for (int j = 0; j < GAME_COLS; j++) {
+//                                for (int i = 0; i < GAME_ROWS; i++) {
+//                                    bricks[i][j] = null;
+//                                }
+//                            }
+//                        }
+//                    }
+                    }
+                }
+                break;
+            }
         }
-        cannon.setMousePosOnPress(e.getPoint());
-        cannon.setCurrentMousePos(e.getPoint());
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        cannon.setMousePressed(false);
+        int mouseX = e.getX();
+        int mouseY = e.getY();
 
-        // Prevent multiple shots in one turn
-        if (turnOngoing) {
-            return;
-        }
+        // Check if the mouse is inside the game area
+        if (mouseX >= GAME_X && mouseX <= GAME_X + GAME_WIDTH && mouseY > GAME_Y && mouseY < GAME_Y + GAME_HEIGHT) {
+            cannon.setMousePressed(false);
 
-        turnOngoing = true;
+            // Prevent multiple shots in one turn
+            if (turnOngoing) {
+                return;
+            }
 
-        cannon.setMousePosOnRelease(e.getPoint());
-        cannon.setCurrentMousePos(e.getPoint());
+            turnOngoing = true;
 
-        cannon.shoot();
+            cannon.setMousePosOnRelease(e.getPoint());
+            cannon.setCurrentMousePos(e.getPoint());
 
-        // Spawn ball if cannon has produced velocity
-        if(cannon.getProducedVelocityMagnitude() > 0){
-            spawnBalls(cannon.getAngle(), cannon.getProducedVelocityMagnitude());
+            cannon.shoot();
+
+            // Spawn ball if cannon has produced velocity
+            if (cannon.getProducedVelocityMagnitude() > 0) {
+                spawnBalls(cannon.getAngle(), cannon.getProducedVelocityMagnitude());
+            }
         }
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if (balls.isEmpty()) {
-            turnOngoing = false;
+        int mouseX = e.getX();
+        int mouseY = e.getY();
+
+        // Check if the mouse is inside the game area
+        if (mouseX >= GAME_X && mouseX <= GAME_X + GAME_WIDTH && mouseY > GAME_Y && mouseY < GAME_Y + GAME_HEIGHT) {
+            if (balls.isEmpty()) {
+                turnOngoing = false;
+            }
+            cannon.setCurrentMousePos(e.getPoint());
         }
-        cannon.setCurrentMousePos(e.getPoint());
     }
 
     @Override
@@ -477,6 +561,7 @@ public class GameScreen extends Screen {
                 // Only play the sound if the hovered button has changed
                 if (!hoveredButton.equals(previousHoveredButton)) {
                     if (soundOn) {
+                        hoverSoundClip.stop();
                         hoverSoundClip.setFramePosition(0); // Rewind to the beginning
                         hoverSoundClip.start();
                     }
