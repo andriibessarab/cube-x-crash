@@ -11,22 +11,21 @@ public class ScreenManager extends JPanel implements ActionListener, ScreenChang
     private final Timer timer;
 
     // All the screens
-    private final Screen mainMenuScreen;
-    private final Screen gameScreen;
+    private final Screen[] screens = new Screen[2];
 
     // Current screen
     private Screen currentScreen;
 
     public ScreenManager() {
         // Initialize the screens
-        mainMenuScreen = new MainMenuScreen(PANEL_WIDTH, PANEL_HEIGHT, this);
-        gameScreen = new GameScreen(PANEL_WIDTH, PANEL_HEIGHT, this);
+        screens[0] = new MainMenuScreen(PANEL_WIDTH, PANEL_HEIGHT, this);
+        screens[1] = new GameScreen(PANEL_WIDTH, PANEL_HEIGHT, this);
 
         setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT)); // Set the size of the panel
         setFocusable(true); // Set the panel to be focusable
         requestFocus(); // Request focus for the panel
 
-        setCurrentScreen(mainMenuScreen);
+        setCurrentScreen(screens[0]);
 
         // Create a timer to update the game state
         timer = new Timer(10, this);
@@ -70,8 +69,8 @@ public class ScreenManager extends JPanel implements ActionListener, ScreenChang
 
         // Check which screen to switch to
         switch (screenName) {
-            case "main-menu" -> setCurrentScreen(mainMenuScreen);
-            case "game" -> setCurrentScreen(gameScreen);
+            case "main-menu" -> setCurrentScreen(screens[0]);
+            case "game" -> setCurrentScreen(screens[1]);
         }
 
     }
