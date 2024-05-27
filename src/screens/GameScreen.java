@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Random;
 
 public class GameScreen extends Screen {
     public final static int GAME_WIDTH = 1266;
@@ -31,7 +32,7 @@ public class GameScreen extends Screen {
     private final static int SQUARE_BLOCK_SIDE =  GAME_WIDTH / GAME_COLS;
     private final static int GAME_ROWS = GAME_HEIGHT / SQUARE_BLOCK_SIDE;
 
-    private final int DEFAULT_NUM_BALLS = 10;
+    private final int DEFAULT_NUM_BALLS = 10, DEFAULT_LIKELIHOOD_OF_NEW_BRICK = 20, DEFAULT_AVG_HEALTH_FOR_BRICK = 8;
 
     private ImageIcon gameFrame;
     private ImageIcon coinIcon;
@@ -46,13 +47,16 @@ public class GameScreen extends Screen {
     private boolean turnOngoing;
     private boolean blocksMovedDown = true; // Add this flag
     private Point nextShootingPosition;
-    private int likelihoodOfNewBrick = 20;
+    private int likelihoodOfNewBrick = DEFAULT_LIKELIHOOD_OF_NEW_BRICK;
     private boolean isPaused = false;
     private Font customFont;
     private FileManager fileManager;
     private int currScore = 0, ballCount = DEFAULT_NUM_BALLS;
+    private boolean gameIsOver = false;
     private int numCoins, highScore;
     private final Clip brickHitClip, brickBreakClip, extraBallClip;
+
+    private int avgHealthForBrick = DEFAULT_AVG_HEALTH_FOR_BRICK;
 
 
 
@@ -69,8 +73,6 @@ public class GameScreen extends Screen {
         try {
             // Load the custom font from the file
             customFont = Font.createFont(Font.TRUETYPE_FONT, new File("src/assets/fonts/superchargelaser.otf"));
-            // Register the font
-            System.out.println("fonttt: " + customFont.getName());
         } catch (IOException | FontFormatException e) {
             // Handle exception
         }
@@ -120,24 +122,41 @@ public class GameScreen extends Screen {
 
         highScore = fileManager.getHighScore();
         currScore = 0;
+        ballCount = DEFAULT_NUM_BALLS;
+        likelihoodOfNewBrick = DEFAULT_LIKELIHOOD_OF_NEW_BRICK;
+        avgHealthForBrick = DEFAULT_AVG_HEALTH_FOR_BRICK;
     }
 
     // FIll a row with bricks
     private void fillRow(int row, int probability) {
         int filledColumns = 0;
+        // Increment the average health every few rows randomly between 1 to 3 rows
+        if (row % (new Random().nextInt(3) + 1) == 0) {
+            avgHealthForBrick += 1; // Adjust this value to control the rate of difficulty increase
+        }
+
+        // Gently increase the likelihood of brick spawning
+        likelihoodOfNewBrick = Math.min(likelihoodOfNewBrick + 1, 95); // Ensure it doesn't exceed 95
+
         for (int j = 0; j < GAME_COLS; j++) {
-            if(Math.random() > probability/100.0)
+            if (Math.random() > likelihoodOfNewBrick / 100.0)
                 continue;
+
+            // Generate a health value around the average health
+            int health = avgHealthForBrick + (new Random().nextInt(3) - 1); // Randomly -1, 0, or +1 from avgHealthForBrick
+
             double n = Math.random();
-            if(n > .4)
-                bricks[row][j] = new SquareBrick(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, 8);
+            if (n > .4)
+                bricks[row][j] = new SquareBrick(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, health);
             else if (n > .08)
-                bricks[row][j] = new TriangleBrick(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, 8);
+                bricks[row][j] = new TriangleBrick(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, health);
             else
-                bricks[row][j] = new ExtraBall(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, 1);
+                bricks[row][j] = new ExtraBall(GAME_X + j * SQUARE_BLOCK_SIDE, GAME_Y + row * SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, SQUARE_BLOCK_SIDE, 1); // ExtraBall health remains constant
+
             filledColumns++;
         }
     }
+
 
     @Override
     public void paintComponent(Graphics g) {
@@ -168,6 +187,15 @@ public class GameScreen extends Screen {
         g.setFont(customFont.deriveFont(30f));
         g.drawImage(ballImage.getImage(), 175, 790, 50, 50, null);
         g.drawString("Balls: " + ballCount, 234, 824);
+
+        // Draw the game-over indicator row
+        Color gameOverRowColor = new Color(196, 196, 243, 50); // Blue color with alpha for transparency
+        g.setColor(gameOverRowColor);
+        g.fillRect(GAME_X, GAME_Y+SQUARE_BLOCK_SIDE*(GAME_ROWS-1),  GAME_WIDTH, SQUARE_BLOCK_SIDE+1);
+
+        // draw a line on top that fades in and out
+        g.setColor(new Color(196, 196, 243, (int) (Math.abs(Math.sin(System.currentTimeMillis() / 200.0) * 255))));
+        g.drawLine(GAME_X, GAME_Y+SQUARE_BLOCK_SIDE*(GAME_ROWS-1), GAME_X+GAME_WIDTH, GAME_Y+SQUARE_BLOCK_SIDE*(GAME_ROWS-1));
 
         cannon.draw(g);
     }
