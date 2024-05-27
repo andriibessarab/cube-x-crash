@@ -15,7 +15,6 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
 
@@ -74,6 +73,8 @@ public class GameScreen extends Screen {
     private final Clip successPurchaseSoundClip;
     private final Clip errorPurchaseSoundClip;
     private final Clip buttonPressSoundClip;
+    private final Clip gameOverSoundClip;
+
     private int avgHealthForBrick = DEFAULT_AVG_HEALTH_FOR_BRICK;
     private String hoveredButton = ""; // The button being hovered over
     private boolean soundOn;
@@ -114,6 +115,7 @@ public class GameScreen extends Screen {
         successPurchaseSoundClip = loadSoundClip("/assets/sounds/successful_purchase.wav");
         errorPurchaseSoundClip = loadSoundClip("/assets/sounds/error_purchase.wav");
         buttonPressSoundClip = loadSoundClip("/assets/sounds/button_press.wav");
+        gameOverSoundClip = loadSoundClip("/assets/sounds/game_over.wav");
     }
 
     @Override
@@ -147,6 +149,7 @@ public class GameScreen extends Screen {
         balls.clear();
         bricks = new Brick[GAME_ROWS][GAME_COLS];
         turnOngoing = false;
+        gameIsOver = false;
 
         // fill in first three rows
         for (int i = 0; i < 3; i++) {
@@ -231,10 +234,16 @@ public class GameScreen extends Screen {
         g.drawString("Coins: " + numCoins, 1215, 828);
 
         // Draw the game-over indicator row
-        Color gameOverRowColor = new Color(196, 196, 243, 50); // Blue color with alpha for transparency
+
+        Color gameOverRowColor = gameIsOver ? new Color(238, 131, 116, 50) : new Color(196, 196, 243, 50);
         g.setColor(gameOverRowColor);
         g.fillRect(GAME_X, GAME_Y+SQUARE_BLOCK_SIDE*(GAME_ROWS-1),  GAME_WIDTH, SQUARE_BLOCK_SIDE+1);
-        g.setColor(new Color(196, 196, 243, (int) (Math.abs(Math.sin(System.currentTimeMillis() / 200.0) * 255))));
+        if (gameIsOver) {
+            g.setColor(new Color(238, 131, 116, (int) (Math.abs(Math.sin(System.currentTimeMillis() / 200.0) * 255))));
+        } else {
+            g.setColor(new Color(196, 196, 243, (int) (Math.abs(Math.sin(System.currentTimeMillis() / 200.0) * 255))));
+        }
+
         g.drawLine(GAME_X, GAME_Y+SQUARE_BLOCK_SIDE*(GAME_ROWS-1), GAME_X+GAME_WIDTH, GAME_Y+SQUARE_BLOCK_SIDE*(GAME_ROWS-1));
 
         // Draw buttons using the stored Y positions from the BUTTON_Y array
@@ -248,6 +257,10 @@ public class GameScreen extends Screen {
     @Override
     public void actionPerformed(ActionEvent e) {
         soundOn = new FileManager().isSoundEnabled(); // for some reason only works when new instance of FileManager is created
+
+        if (gameIsOver) {
+            return;
+        }
 
         // Check if all balls are out of bounds
         if (balls.isEmpty()) {
@@ -368,16 +381,24 @@ public class GameScreen extends Screen {
 
     // Check for game over condition
     private void checkForGameOver() {
-        // if any bricks in last row go back to main menu
+        // If the bottom row has any bricks, the game is over
         for (int j = 0; j < GAME_COLS; j++) {
             if (bricks[GAME_ROWS - 1][j] != null) {
                 if (fileManager.getHighScore() < currScore) {
                     fileManager.saveHighScore(currScore);
                 }
 
-                reset();
-                screenChangeListener.changeScreen("main-menu");
+                gameIsOver = true;
+
                 break;
+            }
+        }
+
+        if (gameIsOver) {
+            if(soundOn) {
+                gameOverSoundClip.stop();
+                gameOverSoundClip.setFramePosition(0); // Rewind to the beginning
+                gameOverSoundClip.start();
             }
         }
     }
@@ -443,6 +464,29 @@ public class GameScreen extends Screen {
     public void mousePressed(MouseEvent e) {
         int mouseX = e.getX();
         int mouseY = e.getY();
+
+        if (gameIsOver) {
+            // Quit button
+            if(isMouseOverButton(mouseX, mouseY, QUIT_BUTTON_X, QUIT_BUTTON_Y, QUIT_BUTTON_WIDTH, QUIT_BUTTON_HEIGHT)) {
+                if (fileManager.getHighScore() < currScore) {
+                    fileManager.saveHighScore(currScore);
+                }
+
+                reset();
+
+                if(soundOn) {
+                    buttonPressSoundClip.stop();
+                    buttonPressSoundClip.setFramePosition(0); // Rewind to the beginning
+                    buttonPressSoundClip.start();
+                }
+
+                screenChangeListener.changeScreen("main-menu");
+            }
+            else {
+                reset();
+                gameIsOver = false;
+            }
+        }
 
         if(turnOngoing)
             return;
@@ -578,6 +622,7 @@ public class GameScreen extends Screen {
                 }
             }
 
+            // Quit button
             if(isMouseOverButton(mouseX, mouseY, QUIT_BUTTON_X, QUIT_BUTTON_Y, QUIT_BUTTON_WIDTH, QUIT_BUTTON_HEIGHT)) {
                 if (fileManager.getHighScore() < currScore) {
                     fileManager.saveHighScore(currScore);
@@ -600,6 +645,9 @@ public class GameScreen extends Screen {
     public void mouseReleased(MouseEvent e) {
         int mouseX = e.getX();
         int mouseY = e.getY();
+
+        if (gameIsOver)
+            return;
 
         // Check if the mouse is inside the game area
         if (mouseX >= GAME_X && mouseX <= GAME_X + GAME_WIDTH && mouseY > GAME_Y && mouseY < GAME_Y + GAME_HEIGHT) {
@@ -629,6 +677,9 @@ public class GameScreen extends Screen {
         int mouseX = e.getX();
         int mouseY = e.getY();
 
+        if (gameIsOver)
+            return;
+
         // Check if the mouse is inside the game area
         if (mouseX >= GAME_X && mouseX <= GAME_X + GAME_WIDTH && mouseY > GAME_Y && mouseY < GAME_Y + GAME_HEIGHT) {
             cannon.setCurrentMousePos(e.getPoint());
@@ -645,7 +696,7 @@ public class GameScreen extends Screen {
         hoveredButton = "";
         if(isMouseOverButton(mouseX, mouseY, QUIT_BUTTON_X, QUIT_BUTTON_Y, QUIT_BUTTON_WIDTH, QUIT_BUTTON_HEIGHT) && !turnOngoing) {
             hoveredButton = "quit";
-        } else {
+        } else if (!turnOngoing && !gameIsOver) {
             for (int i = 0; i < UPGRADE_BUTTON_X.length; i++) {
                 if (isMouseOverButton(mouseX, mouseY, UPGRADE_BUTTON_X[i], UPGRADE_BUTTON_Y, UPGRADE_BUTTON_WIDTH, UPGRADE_BUTTON_HEIGHT) && !turnOngoing) {
                     switch (i) {

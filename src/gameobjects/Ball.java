@@ -1,7 +1,6 @@
 package gameobjects;
 
 import gameobjects.bricks.Brick;
-import gameobjects.bricks.SquareBrick;
 import gameobjects.bricks.TriangleBrick;
 import screens.GameScreen;
 
