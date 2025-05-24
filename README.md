@@ -1,6 +1,6 @@
 # 🟦 🟦 Cube X Crash
 
-<img src="src/assets/gifs/gameplay.gif" width="600" alt="Gameplay preview of Cube X Crash">  
+<img src="src/assets/gifs/gameplay.gif" alt="Gameplay preview of Cube X Crash">  
 
 **Cube X Crash** is a Java game I developed as my final project for ICS4U.
 
